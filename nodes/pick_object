@@ -1,0 +1,327 @@
+#!/usr/bin/env python
+import sys
+
+import rospy
+import actionlib
+from std_srvs.srv import Empty, EmptyResponse
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from trajectory_msgs.msg import JointTrajectoryPoint
+from controller_manager_msgs.srv import SwitchControllerRequest, SwitchController
+from controller_manager_msgs.srv import LoadControllerRequest, LoadController
+import geometry_msgs.msg as geometry_msgs
+# from cartesian_control_msgs.msg import (
+#     FollowCartesianTrajectoryAction,
+#     FollowCartesianTrajectoryGoal,
+#     CartesianTrajectoryPoint,
+# )
+import time
+import signal
+from argonne_final_project.RobotiqHand import RobotiqHand
+import moveit_commander
+import tf2_ros
+
+
+
+HOST = "192.168.12.248"
+PORT = 54321
+
+def handler(signal, frame):
+    global cont
+    cont = False
+
+#straight forward just position
+ee_pos = [1.0333, 0.021065, 0.859]
+
+#position with end effector pose
+ee_with_pose = [1.0333, 0.021065, 0.859,0.56546, 0.50463, 0.44492, 0.47713]
+
+## joint control
+pos_left = [2.14,-2.00,-1.63,3.50,-1.71,3.0]
+pos_right = [2.14,-3.39,-1.63,-1.70,-1.71,-2.64]
+
+looking_pose = [0.84709, 0.035954, 1.0775,0.64439, 0.58024, 0.33922, 0.3647]
+setup_pose = [0.83294, 0.041071, 0.8052,0.54062, 0.48426, 0.46606, 0.50597]
+setup_above_pose = [0.83294, 0.041071, 0.8352,0.54062, 0.48426, 0.46606, 0.50597]
+setup_higher_pose = [0.64796, 0.10451, 1.2673,0.54062, 0.48426, 0.46606, 0.50597]
+lift_pose = [0.97633, 0.027336, 0.83743,0.5406, 0.48429, 0.46616, 0.50588]
+get_pose = [0.97633, 0.027336, 0.79743,0.5406, 0.48429, 0.46616, 0.50588]
+tool_orientation = [0,0,0,0.5406, 0.48429, 0.46616, 0.50588]
+
+
+ur16e_pose = [-0.0074756, -0.036322, 1.5851,-0.37578, 0.63553, 0.57589, 0.35106]
+
+
+
+
+class Mover:
+    """Node to test basic functions of UR robot"""
+    def __init__(self): 
+        '''
+        Initialize variables and load parameters.
+        '''
+        moveit_commander.roscpp_initialize(sys.argv)
+        self.robot = moveit_commander.RobotCommander()
+        group_name = "ur5e"
+        self.move_group = moveit_commander.MoveGroupCommander(group_name)
+        group_name_16 = "ur16e"
+        self.move_group_16 = moveit_commander.MoveGroupCommander(group_name_16)
+        self.robot_step_left = rospy.Service("step_left", Empty , self.step_left) 
+        self.robot_step_right = rospy.Service("step_right", Empty , self.step_right) 
+        self.robot_demo = rospy.Service("marco/demo_move",Empty, self.demo_move)
+        self.ee_pos_srv = rospy.Service("marco/goto_pos", Empty , self.go_pos) 
+        self.ee_pose_srv = rospy.Service("marco/goto_pose", Empty , self.go_pose) 
+        self.open_hand_srv = rospy.Service("marco/open", Empty , self.open_hand) 
+        self.close_hand_srv = rospy.Service("marco/close", Empty , self.close_hand) 
+
+        self.test_robotiq()
+        self.tfBuffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tfBuffer)
+
+        self.move_group.set_pose_target(looking_pose)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+        self.count = 0
+        self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
+
+    def test_robotiq(self):
+        print 'test_robotiq start'
+        self.hand = RobotiqHand()
+        self.hand.connect(HOST, PORT)
+        self.hand.reset()
+        self.hand.activate()
+    
+    def close_hand(self,req):
+        self.hand.move(255, 100, 1)
+        (status, position, force) = self.hand.wait_move_complete()
+
+        return EmptyResponse()
+
+    def open_hand(self,req):
+        self.hand.move(0, 100, 1)
+        (status, position, force) = self.hand.wait_move_complete()
+
+        return EmptyResponse()
+
+    def main_loop(self,timer):
+        # temp_pos = self.move_group.get_current_pose("manipulator")
+        
+        try:
+            self.trans = self.tfBuffer.lookup_transform("base_link","Tag69",rospy.Time())
+            if self.count == 50:
+                print("The new transform is", self.trans)
+                self.count = 0
+            self.count = self.count + 1
+
+        except:
+            pass
+        # print(f"The new transform is {trans}")
+
+
+
+
+
+    def step_left(self,req):
+        '''
+        Function: Moves the robot to a specified x, y, z coordinates. Also moves the gripper.
+        Arguments:Pose, but only uses the x, y, z coordinates. Also, true or false arguments for opening and closing the gripper.
+        Return: Error code, 1 for success and -1 for failure.
+        '''
+        print("error1")
+        self.move_group.set_joint_value_target(pos_left)
+        '''
+        #only works with python3
+        print("error2")
+            # move_group.set_pose_target(pose_in_space)
+            ##use set_target_position
+            (success_flag, trajectory_message,planning_time, error_code) = self.move_group.plan()
+        print("error3")
+            if success_flag == False:
+                return error_code
+        print("error4")
+            self.move_group.execute(trajectory_message, wait=TRUE)
+        '''
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        ###########################################
+
+        return EmptyResponse()
+
+    
+    def step_right(self,req):
+        '''
+        Function: Moves the robot to a specified x, y, z coordinates. Also moves the gripper.
+        Arguments:Pose, but only uses the x, y, z coordinates. Also, true or false arguments for opening and closing the gripper.
+        Return: Error code, 1 for success and -1 for failure.
+        '''
+        self.move_group.set_joint_value_target(pos_right)
+        # move_group.set_pose_target(pose_in_space)
+        ##use set_target_position
+        (success_flag, trajectory_message,planning_time, error_code) = self.move_group.plan()
+        if success_flag == False:
+            return error_code
+        self.move_group.execute(trajectory_message,wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+ 
+        ###########################################
+
+        return EmptyResponse()
+
+    def demo_move(self,req):
+        
+        new_get = tool_orientation
+        new_get[0] = self.trans.transform.translation.x
+        new_get[1] = self.trans.transform.translation.y
+        new_get[2] = self.trans.transform.translation.z
+
+        # self.move_group.set_pose_target(looking_pose)
+        # self.move_group.go(wait=True)
+        # self.move_group.stop()
+        # self.move_group.clear_pose_targets()
+
+        self.move_group.set_pose_target([0.70445, 0.049504, 1.1009,0.54083, 0.48453, 0.46611, 0.50544])
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        # new_get = tool_orientation
+        # new_get[0] = self.trans.tranform.translation.x
+        # new_get[1] = self.trans.tranform.translation.y
+        # new_get[2] = self.trans.tranform.translation.z
+
+        self.move_group.set_pose_target(new_get)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        self.hand.move(255, 100, 1)
+        (status, position, force) = self.hand.wait_move_complete()
+
+        # self.move_group.set_pose_target(lift_pose)
+        # self.move_group.go(wait=True)
+        # self.move_group.stop()
+        # self.move_group.clear_pose_targets()
+
+        self.move_group.set_pose_target([0.70445, 0.049504, 1.1009,0.54083, 0.48453, 0.46611, 0.50544])
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        self.hand.move(0, 100, 1)
+        (status, position, force) = self.hand.wait_move_complete()
+
+        # self.move_group.set_pose_target(setup_higher_pose)
+        # self.move_group.go(wait=True)
+        # self.move_group.stop()
+        # self.move_group.clear_pose_targets()
+
+        # self.move_group_16.set_pose_target(ur16e_pose)
+        # self.move_group_16.go(wait=True)
+        # self.move_group_16.stop()
+        # self.move_group_16.clear_pose_targets()
+
+    # def demo_move(self,req):
+        
+    #     new_get = tool_orientation
+    #     new_get[0] = self.trans.transform.translation.x
+    #     new_get[1] = self.trans.transform.translation.y
+    #     new_get[2] = self.trans.transform.translation.z
+
+    #     # self.move_group.set_pose_target(looking_pose)
+    #     # self.move_group.go(wait=True)
+    #     # self.move_group.stop()
+    #     # self.move_group.clear_pose_targets()
+
+    #     self.move_group.set_pose_target(setup_pose)
+    #     self.move_group.go(wait=True)
+    #     self.move_group.stop()
+    #     self.move_group.clear_pose_targets()
+
+    #     # new_get = tool_orientation
+    #     # new_get[0] = self.trans.tranform.translation.x
+    #     # new_get[1] = self.trans.tranform.translation.y
+    #     # new_get[2] = self.trans.tranform.translation.z
+
+    #     self.move_group.set_pose_target(new_get)
+    #     self.move_group.go(wait=True)
+    #     self.move_group.stop()
+    #     self.move_group.clear_pose_targets()
+
+    #     self.hand.move(255, 100, 1)
+    #     (status, position, force) = self.hand.wait_move_complete()
+
+    #     self.move_group.set_pose_target(lift_pose)
+    #     self.move_group.go(wait=True)
+    #     self.move_group.stop()
+    #     self.move_group.clear_pose_targets()
+
+    #     self.move_group.set_pose_target(setup_above_pose)
+    #     self.move_group.go(wait=True)
+    #     self.move_group.stop()
+    #     self.move_group.clear_pose_targets()
+
+    #     # self.move_group.set_pose_target(setup_higher_pose)
+    #     # self.move_group.go(wait=True)
+    #     # self.move_group.stop()
+    #     # self.move_group.clear_pose_targets()
+
+    #     # self.move_group_16.set_pose_target(ur16e_pose)
+    #     # self.move_group_16.go(wait=True)
+    #     # self.move_group_16.stop()
+    #     # self.move_group_16.clear_pose_targets()
+
+    #     ###########################################
+
+    #     return EmptyResponse()
+
+
+    def go_pos(self,req):
+        self.move_group.set_position_target(ee_pos)
+        # move_group.set_pose_target(pose_in_space)
+        ##use set_target_position
+        # (success_flag, trajectory_message,planning_time, error_code) = self.move_group.plan()
+        # if success_flag == False:
+        #     return error_code
+        # self.move_group.execute(trajectory_message,wait=True)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+ 
+        ###########################################
+
+        return EmptyResponse()
+
+    def go_pose(self,req):
+        self.move_group.set_pose_target(ee_with_pose)
+        # move_group.set_pose_target(pose_in_space)
+        ##use set_target_position
+        # (success_flag, trajectory_message,planning_time, error_code) = self.move_group.plan()
+        # if success_flag == False:
+        #     return error_code
+        # self.move_group.execute(trajectory_message,wait=True)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+ 
+        ###########################################
+
+        return EmptyResponse()
+
+def main(): #The main function.
+    rospy.init_node("test_node")
+    try:
+        move_arm = Mover()
+        rospy.spin()
+
+    except rospy.ROSInterruptException:
+        return
+    except KeyboardInterrupt:
+        return
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, handler)
+    main()

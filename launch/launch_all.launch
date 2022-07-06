@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<launch>
+  <!--UR16e arguments-->
+  <!--TO DO -->
+  <!--GET IP ADDRESS OF UR16e-->
+  <arg name="UR16e_kinematics" default="$(find ur_description)/config/ur16e/default_kinematics.yaml"/>
+  <arg name="UR16e_controller_config_file" default="$(find argonne_final_project)/etc/UR16e_controllers.yaml"/>
+  <arg name="UR16e_ip" default="192.168.12.243"/>
+  <arg name="UR16e_reverse_port" default="50004"/>
+  <arg name="UR16e_script_sender_port" default="50005"/>
+  <arg name="UR16e_trajectory_port" default="50006"/>
+
+  <!--UR5e arguments-->
+  <!--Good to go-->
+  <arg name="UR5e_kinematics" default="$(find ur_description)/config/ur5e/default_kinematics.yaml"/>
+  <arg name="UR5e_controller_config_file" default="$(find argonne_final_project)/etc/UR5e_controllers.yaml"/>
+  <arg name="UR5e_ip" default="192.168.12.248"/>
+  <arg name="UR5e_reverse_port" default="50001"/>
+  <arg name="UR5e_script_sender_port" default="50002"/>
+  <arg name="UR5e_trajectory_port" default="50003"/>
+
+  <!--common arguments-->
+  <arg name="use_tool_communication" default="false"/>
+  <arg name="controllers" default="joint_state_controller scaled_pos_joint_traj_controller speed_scaling_state_controller force_torque_sensor_controller" doc="Controllers that are activated by default."/>
+  <arg name="stopped_controllers" default="pos_joint_traj_controller joint_group_vel_controller" doc="Controllers that are initally loaded, but not started."/>
+
+  <include file="$(find argonne_final_project)/launch/load_both_arms.launch">
+    <arg name="UR5e_kinematics" value="$(arg UR5e_kinematics)"/>
+    <arg name="UR16e_kinematics" value="$(arg UR16e_kinematics)"/>
+  </include>
+
+  <group ns="UR16e">
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <!-- <remap from="joint_states" to="/joint_states"/> -->
+    </node>
+
+    <include file="$(find ur_robot_driver)/launch/ur_control.launch">
+      <arg name="use_tool_communication" value="$(arg use_tool_communication)"/>
+      <arg name="controller_config_file" value="$(arg UR16e_controller_config_file)"/>
+      <arg name="robot_ip" value="$(arg UR16e_ip)"/>
+      <arg name="reverse_port" value="$(arg UR16e_reverse_port)"/>
+      <arg name="script_sender_port" value="$(arg UR16e_script_sender_port)"/>
+      <arg name="trajectory_port" value="$(arg UR16e_trajectory_port)"/>
+      <arg name="kinematics_config" value="$(arg UR16e_kinematics)"/>
+      <arg name="tf_prefix" value="UR16e_"/>
+      <arg name="controllers" value="$(arg controllers)"/>
+      <arg name="stopped_controllers" value="$(arg stopped_controllers)"/>
+    </include>
+    <node name="joint_state_relay" type="relay" pkg="topic_tools" args="joint_states /joint_states"/>
+  </group>
+
+  <group ns="UR5e">
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <remap from="joint_states" to="/joint_states"/>
+    </node>
+
+
+    <include file="$(find ur_robot_driver)/launch/ur_control.launch">
+      <arg name="use_tool_communication" value="$(arg use_tool_communication)"/>
+      <arg name="controller_config_file" value="$(arg UR5e_controller_config_file)"/>
+      <arg name="robot_ip" value="$(arg UR5e_ip)"/>
+      <arg name="reverse_port" value="$(arg UR5e_reverse_port)"/>
+      <arg name="script_sender_port" value="$(arg UR5e_script_sender_port)"/>
+      <arg name="trajectory_port" value="$(arg UR5e_trajectory_port)"/>
+      <arg name="kinematics_config" value="$(arg UR5e_kinematics)"/>
+      <arg name="tf_prefix" value="UR5e_"/>
+      <arg name="controllers" value="$(arg controllers)"/>
+      <arg name="stopped_controllers" value="$(arg stopped_controllers)"/>
+    </include>
+    <node name="joint_state_relay" type="relay" pkg="topic_tools" args="joint_states /joint_states"/>
+  </group>
+
+  
+  <!--Convenience stuff for demo purposes
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ur_example_dual_robot)/etc/view_robot.rviz" required="true" />
+  <node name="rqt_joint_trajectory_controller" pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" respawn="false" output="screen">
+  </node>
+  -->
+
+</launch>

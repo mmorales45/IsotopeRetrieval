@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+##Needs python3 to work
+#nvm, python3 needs tkinter, python 2.7 needs Tkinter
+import sys
+
+import rospy
+from std_srvs.srv import Empty
+import requests, json
+from Tkinter import *
+
+ip = '192.168.12.1' # Ip if not connected to robot itself
+host = 'http://mir.com/api/v2.0.0/'   #If connected to robot
+# host = 'http://' + ip + '/api/v2.0.0/'   # if not connected to robot
+
+class mobile_base:
+    """Node to test basic functions of UR robot"""
+    def __init__(self): 
+        headers = {}
+        headers['Content-Type'] = 'application/json'
+        headers['Authorization'] = 'Basic bWFyY286OWY4NmQwODE4ODRjN2Q2NTlhMmZlYWEwYzU1YWQwMTVhM2JmNGYxYjJiMGI4MjJjZDE1ZDZjMTViMGYwMGEwOA=='
+        self.mission_service = rospy.Service("marco/start_mission", Empty,Mission_Start)
+        # print(headers)
+
+        # get_missions = requests.get(host + 'missions',headers = headers)
+        # # print(get_missions.text)
+
+        # mission_id = {"mission_id": "aae45adf-d82a-11ec-84ed-00012978eb25"}
+        # post_mission = requests.post(host + 'mission_queue', json = mission_id, headers = headers)
+
+    def Mission_Start(self,req):
+        get_missions = requests.get(host + 'missions',headers = headers)
+        # print(get_missions.text)
+
+        mission_id = {"mission_id": "aae45adf-d82a-11ec-84ed-00012978eb25"}
+        post_mission = requests.post(host + 'mission_queue', json = mission_id, headers = headers)
+
+
+def main(): #The main function.
+    rospy.init_node("mir_NAVIGATOR")
+    try:
+        mission_move = mobile_base()
+        rospy.spin()
+
+    except rospy.ROSInterruptException:
+        return
+    except KeyboardInterrupt:
+        return
+
+
+if __name__ == "__main__":
+    main()
+

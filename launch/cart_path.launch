@@ -1,0 +1,11 @@
+<launch>
+    <!-- Launch RVIZ config -->
+    <node name="rviz" pkg = "rviz" type="rviz" args=" -d $(find argonne_final_project)/config/lab.rviz" />
+
+    <!-- Launch move_group aka MOVEIT -->
+    <include file="$(find dual_arm_moveit_config)/launch/move_group.launch" pass_all_args="true"/>
+
+    <!-- Laucnh the node -->
+    <node name="cartesian_path" pkg="argonne_final_project" type="cartesian_path" output="screen"/>
+
+</launch>

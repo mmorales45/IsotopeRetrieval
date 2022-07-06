@@ -1,0 +1,131 @@
+#!/usr/bin/env python
+
+
+import sys
+import copy
+import rospy
+import moveit_commander
+import moveit_msgs.msg
+import geometry_msgs.msg
+from math import pi
+from std_msgs.msg import String
+from moveit_commander.conversions import pose_to_list
+from std_srvs.srv import Empty, EmptyResponse
+from geometry_msgs.msg import Pose
+from argonne_final_project.srv import CPose, Quat
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+
+
+
+
+
+class Coop:
+    """Node to test basic functions of UR robot"""
+    def __init__(self): 
+        '''
+        Initialize variables and load parameters.
+        '''
+        moveit_commander.roscpp_initialize(sys.argv)
+        self.robot = moveit_commander.RobotCommander()
+        group_name = "ur5e"
+        self.move_group_5 = moveit_commander.MoveGroupCommander(group_name)
+        group_name_16 = "ur16e"
+        self.move_group_16 = moveit_commander.MoveGroupCommander(group_name_16)
+
+        self.go_up_srv = rospy.Service("marco/go_up", Empty , self.go_up)
+        self.move_cart_srv = rospy.Service("marco/step", CPose , self.move_cart)
+        self.get_current_pose_srv = rospy.Service("marco/get_current_pose", Empty , self.get_current_pose)
+        self.get_rpy_srv = rospy.Service("marco/get_RPY", Quat , self.convert_to_RPY)
+    
+
+        self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
+
+
+    def main_loop(self,timer):
+        # temp_pos = self.move_group.get_current_pose("manipulator")
+        # print("got here")
+        pass
+
+    def go_up(self,req):
+        scale = 1
+        waypoints = []
+
+        wpose = self.move_group_5.get_current_pose().pose
+        wpose.position.x += scale * 0.1  # First move up (z)
+        # wpose.position.y += scale * 0.2  # and sideways (y)
+        waypoints.append(copy.deepcopy(wpose))
+
+        # We want the Cartesian path to be interpolated at a resolution of 1 cm
+        # which is why we will specify 0.01 as the eef_step in Cartesian
+        # translation.  We will disable the jump threshold by setting it to 0.0,
+        # ignoring the check for infeasible jumps in joint space, which is sufficient
+        # for this tutorial.
+        (plan, fraction) = self.move_group_5.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group_5.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group_5.execute(plan,wait=True)
+
+        ###########################################
+
+        return EmptyResponse()
+    def move_cart(self,req):
+        print(req.Pose)
+        waypoints = []
+        waypoints.append(req.Pose)
+        (plan, fraction) = self.move_group_5.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)
+        plan = self.move_group_5.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group_5.execute(plan,wait=True)
+        return EmptyResponse()
+
+    def go_down(self,req):
+        pass
+ 
+        ###########################################
+
+        return EmptyResponse()
+    def get_current_pose(self,req):
+        '''
+        Find the current pose of the robot and display both the both and the roll,
+        pitch, yaw of the end effector.
+        '''
+        pose_ur16e = self.move_group_5.get_current_pose().pose
+        pose_ur5e = self.move_group_16.get_current_pose().pose
+        print("UR5e Pose",pose_ur16e)
+        print("UR16e Pose",pose_ur5e)
+        quaternion_ur5e = (pose_ur5e.orientation.x,pose_ur5e.orientation.y,pose_ur5e.orientation.z,pose_ur5e.orientation.w)
+        quaternion_ur16e = (pose_ur16e.orientation.x,pose_ur16e.orientation.y,pose_ur16e.orientation.z,pose_ur16e.orientation.w)
+
+        euler_ur5e = euler_from_quaternion(quaternion_ur5e)
+        euler_ur16e = euler_from_quaternion(quaternion_ur16e)
+
+        print("UR5e RPY",euler_ur5e)
+        print("UR16e RPY",euler_ur16e)
+        return EmptyResponse()
+    def convert_to_RPY(self,req):
+        euler = [req.R,req.P,req.Y]
+        quat = quaternion_from_euler(req.R,req.P,req.Y)
+        print(quat)
+        return EmptyResponse()
+
+def main(): #The main function.
+    rospy.init_node("cartesian_path")
+    try:
+        move_arm = Coop()
+        rospy.spin()
+
+    except rospy.ROSInterruptException:
+        return
+    except KeyboardInterrupt:
+        return
+
+
+if __name__ == "__main__":
+    main()

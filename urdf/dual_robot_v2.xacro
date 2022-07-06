@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="my_work_cell">
+  <!--Load the macro for creating a robot-->
+  <xacro:include filename="$(find ur_description)/urdf/inc/ur5e_macro.xacro"/>
+  <xacro:include filename="$(find ur_description)/urdf/inc/ur16e_macro.xacro"/>
+
+  <!--Instanciate the robots-->
+  <xacro:ur16e_robot prefix="ur16e_" kinematics_parameters_file="$(arg ur16e_kinematics)"/>
+  <xacro:ur5e_robot prefix="ur5e_" kinematics_parameters_file="$(arg ur5e_kinematics)" />
+
+  <!--common link where the tf tree originates from-->
+  <link name="world_2"/>
+
+  <!--Define the robot poses in the world-->
+  <joint name="world_to_ur16e" type="fixed">
+    <parent link="world_2" />
+    <child link = "ur16e_base_link" />
+    <origin xyz="-0.5 0 0" rpy="0 0 0" />
+  </joint>
+  <joint name="world_to_ur5e" type="fixed">
+    <parent link="world_2" />
+    <child link = "ur5e_base_link" />
+    <origin xyz="0.5 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

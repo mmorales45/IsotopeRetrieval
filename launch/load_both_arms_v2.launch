@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="ur16e_kinematics" default="$(find ur_description)/config/ur16e/default_kinematics.yaml"/>
+  <arg name="ur5e_kinematics" default="$(find ur_description)/config/ur5e/default_kinematics.yaml"/>
+  <param name="robot_description" command="$(find xacro)/xacro '$(find argonne_final_project)/urdf/dual_robot_v2.xacro'
+   ur16e_kinematics:=$(arg ur16e_kinematics)
+   ur5e_kinematics:=$(arg ur5e_kinematics)
+  "/>
+</launch>
