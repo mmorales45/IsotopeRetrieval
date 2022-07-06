@@ -110,3 +110,4 @@ rosservice call /UR5e/ur_hardware_interface/dashboard/power_off
 rosservice call /UR16e/ur_hardware_interface/dashboard/power_off
 ```
 There are two ways to control the gripper, using a python or C++ library.
+
