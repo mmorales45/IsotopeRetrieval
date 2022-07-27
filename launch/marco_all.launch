@@ -9,6 +9,6 @@
     <include file="$(find argonne_final_project)/launch/intel_cam.launch" pass_all_args="true"/>
 
     <!-- Laucnh the node -->
-    <node name="new_demo" pkg="argonne_final_project" type="new_demo" output="screen"/>
+    <node name="moving_demo" pkg="argonne_final_project" type="moving_demo" output="screen"/>
 
 </launch>

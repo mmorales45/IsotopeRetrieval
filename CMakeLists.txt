@@ -192,6 +192,7 @@ catkin_install_python(PROGRAMS
   nodes/mir_test
   nodes/new_demo
   nodes/cartesian_path
+  nodes/moving_demo
   GUI/hardwareSrcNode
   GUI/GUI.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

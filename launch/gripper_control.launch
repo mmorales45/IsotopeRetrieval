@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+
+  <group ns="ur5e">
+    <node name = "Robotiq2FGripperRtuNode" pkg="robotiq_2f_gripper_control" type="Robotiq2FGripperRtuNode.py" args="/tmp/ttyUR5e" />
+  </group>
+
+  <group ns="ur16e">
+    <node name = "Robotiq2FGripperRtuNode" pkg="robotiq_2f_gripper_control" type="Robotiq2FGripperRtuNode.py" args="/tmp/ttyUR16e" />
+  </group>
+
+</launch>

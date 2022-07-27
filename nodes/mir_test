@@ -8,9 +8,9 @@ from std_srvs.srv import Empty
 import requests, json
 from Tkinter import *
 
-ip = '192.168.12.1' # Ip if not connected to robot itself
-host = 'http://mir.com/api/v2.0.0/'   #If connected to robot
-# host = 'http://' + ip + '/api/v2.0.0/'   # if not connected to robot
+ip = '192.168.1.57' # Ip if not connected to robot itself
+# host = 'http://mir.com/api/v2.0.0/'   #If connected to robot
+host = 'http://' + ip + '/api/v2.0.0/'   # if not connected to robot
 
 class mobile_base:
     """Node to test basic functions of UR robot"""
@@ -18,17 +18,22 @@ class mobile_base:
         headers = {}
         headers['Content-Type'] = 'application/json'
         headers['Authorization'] = 'Basic bWFyY286OWY4NmQwODE4ODRjN2Q2NTlhMmZlYWEwYzU1YWQwMTVhM2JmNGYxYjJiMGI4MjJjZDE1ZDZjMTViMGYwMGEwOA=='
-        self.mission_service = rospy.Service("marco/start_mission", Empty,Mission_Start)
+        self.mission_service = rospy.Service("marco/start_mission", Empty,self.Mission_Start)
+
         # print(headers)
 
-        # get_missions = requests.get(host + 'missions',headers = headers)
-        # # print(get_missions.text)
-
+        get_missions = requests.get(host + 'missions',headers = headers)
+        list_missions = json.loads(get_missions.text)
+        print("Available Missions: " + str(len(list_missions)))
+        for i in list_missions:
+            if i['name'] == 'Go_END':
+                print("found!")
+        
         # mission_id = {"mission_id": "aae45adf-d82a-11ec-84ed-00012978eb25"}
         # post_mission = requests.post(host + 'mission_queue', json = mission_id, headers = headers)
 
     def Mission_Start(self,req):
-        get_missions = requests.get(host + 'missions',headers = headers)
+        # get_missions = requests.get(host + 'missions',headers = headers)
         # print(get_missions.text)
 
         mission_id = {"mission_id": "aae45adf-d82a-11ec-84ed-00012978eb25"}

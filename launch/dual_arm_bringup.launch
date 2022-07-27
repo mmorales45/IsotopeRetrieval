@@ -33,7 +33,17 @@
     </node>
 
     <include file="$(find ur_robot_driver)/launch/ur_control.launch">
-      <arg name="use_tool_communication" value="$(arg use_tool_communication)"/>
+
+      <arg name="use_tool_communication" value="true"/>
+      <arg name="tool_voltage" value="24"/>
+      <arg name="tool_parity" value="0"/>
+      <arg name="tool_baud_rate" value="115200"/>
+      <arg name="tool_stop_bits" value="1"/>
+      <arg name="tool_rx_idle_chars" value="1.5"/>
+      <arg name="tool_tx_idle_chars" value="3.5"/>
+      <arg name="tool_device_name" value="/tmp/ttyUR16e"/>
+
+
       <arg name="controller_config_file" value="$(arg ur16e_controller_config_file)"/>
       <arg name="robot_ip" value="$(arg ur16e_ip)"/>
       <arg name="reverse_port" value="$(arg ur16e_reverse_port)"/>
@@ -54,14 +64,14 @@
 
 
     <include file="$(find ur_robot_driver)/launch/ur_control.launch">
-      <arg name="use_tool_communication" value="False"/>
+      <arg name="use_tool_communication" value="true"/>
       <arg name="tool_voltage" value="24"/>
       <arg name="tool_parity" value="0"/>
       <arg name="tool_baud_rate" value="115200"/>
       <arg name="tool_stop_bits" value="1"/>
       <arg name="tool_rx_idle_chars" value="1.5"/>
       <arg name="tool_tx_idle_chars" value="3.5"/>
-      <arg name="tool_device_name" value="/tmp/ttyUR"/>
+      <arg name="tool_device_name" value="/tmp/ttyUR5e"/>
         
       <arg name="controller_config_file" value="$(arg ur5e_controller_config_file)"/>
       <arg name="robot_ip" value="$(arg ur5e_ip)"/>
@@ -85,5 +95,7 @@
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" respawn="false">
     <rosparam param="source_list">['/ur5e/joint_states','/ur16e/joint_states']</rosparam>
   </node>
+
+  <include file="$(find argonne_final_project)/launch/gripper_control.launch"/>
 
 </launch>

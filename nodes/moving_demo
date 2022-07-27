@@ -23,6 +23,8 @@ from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output  as ou
 import moveit_commander
 import tf2_ros
 from sensor_msgs.msg import JointState
+import copy
+
 
 #straight forward just position
 ee_pos = [1.0333, 0.021065, 0.859]
@@ -71,7 +73,6 @@ class Coop:
         '''
         Initialize variables and load parameters.
         '''
-        self.flag = 0
         moveit_commander.roscpp_initialize(sys.argv)
         self.robot = moveit_commander.RobotCommander()
         group_name = "ur5e"
@@ -87,20 +88,23 @@ class Coop:
         self.reset_all_srv = rospy.Service("marco/reset_all", Empty , self.reset_all) 
 
         self.ur5e_gripper_pub = rospy.Publisher('ur5e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
-        self.js_pub = rospy.Publisher('/joint_states', JointState,queue_size=10)
-
-        self.ur16e_pub = rospy.Publisher("/set_position",SetPosition,queue_size=10)
+        self.ur16e_gripper_pub = rospy.Publisher('ur16e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
         self.close_ur16e_srv = rospy.Service("marco/close_ur16e", Empty , self.close_ur16e) 
         self.open_ur16e_srv = rospy.Service("marco/open_ur16e", Empty , self.open_ur16e) 
-
-        self.ur5e_gripper = RobotiqControl()
-        command = self.ur5e_gripper.reset()
-        self.ur5e_gripper_pub.publish(command)
         
-        rospy.sleep(0.5)
-        command = self.ur5e_gripper.activate()
+        rospy.sleep(2.0)
+        self.ur5e_gripper = RobotiqControl()
+        self.ur16e_gripper = RobotiqControl()
+        command = self.ur5e_gripper.reset()
+        command_16 = self.ur16e_gripper.reset()
         self.ur5e_gripper_pub.publish(command)
-
+        self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
+        command = self.ur5e_gripper.activate()
+        command_16 = self.ur16e_gripper.activate()
+        self.ur5e_gripper_pub.publish(command)
+        self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
 
         self.tfBuffer = tf2_ros.Buffer()
         self.listener = tf2_ros.TransformListener(self.tfBuffer)
@@ -116,53 +120,40 @@ class Coop:
         self.move_group_16.clear_pose_targets()
 
         self.count = 0
-        rospy.loginfo('Waiting for Service')
-        rospy.wait_for_service('marco/mission_complete')
+        # rospy.loginfo('Waiting for Service')
+        # rospy.wait_for_service('marco/mission_complete')
 
         rospy.loginfo('Demo Ready!')
+        self.complete_flag = 0
+        self.start_time = rospy.Time.now().to_sec()
         self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
 
     
     def close_hand(self,req):
-        # js = JointState()
-        # js.header.stamp = rospy.Time.now()
-        # js.name = []
-        # js.position = []
-        # js.velocity = []
-        # js.effort = []
 
         command = self.ur5e_gripper.close()
         self.ur5e_gripper_pub.publish(command)
-        rospy.sleep(0.5)
+        rospy.sleep(1.0)
         return EmptyResponse()
 
     def open_hand(self,req):
 
         command = self.ur5e_gripper.open()
         self.ur5e_gripper_pub.publish(command)
-        
-        rospy.sleep(0.5)
+        rospy.sleep(1.0)
 
         return EmptyResponse()
 
     def close_ur16e(self,req):
-        close_pos = SetPosition()
-        close_pos.id = 1
-        close_pos.position = 700
-        print("got here")
-        self.ur16e_pub.publish(close_pos)
-        print("finished!")
-        rospy.sleep(0.5)
+        command = self.ur16e_gripper.close()
+        self.ur16e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
         return EmptyResponse()
 
     def open_ur16e(self,req):
-        open_pos = SetPosition()
-        open_pos.id = 1
-        open_pos.position = 0
-        print("got here")
-        self.ur16e_pub.publish(open_pos)
-        print("finished!")
-        rospy.sleep(0.5)
+        command = self.ur16e_gripper.open()
+        self.ur16e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
 
         return EmptyResponse()
 
@@ -187,7 +178,16 @@ class Coop:
 
         
     def reset_all(self,req):
-        
+        command = self.ur5e_gripper.reset()
+        command_16 = self.ur16e_gripper.reset()
+        self.ur5e_gripper_pub.publish(command)
+        self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
+        command = self.ur5e_gripper.activate()
+        command_16 = self.ur16e_gripper.activate()
+        self.ur5e_gripper_pub.publish(command)
+        self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
 
         self.move_group.set_pose_target(ur5_home)
         self.move_group.go(wait=True)
@@ -200,28 +200,47 @@ class Coop:
         self.move_group_16.clear_pose_targets()
 
     def main_loop(self,timer):
- 
+        # self.tfBuffer = tf2_ros.Buffer()
+        # self.listener = tf2_ros.TransformListener(self.tfBuffer)
+        self.end_time = rospy.Time.now().to_sec()
         try:
-            self.trans = self.tfBuffer.lookup_transform("base_link","Tag69",rospy.Time())
-            if self.flag == 0:
-                self.flag = 1
+            self.trans = self.tfBuffer.lookup_transform("base_link","Tag69",rospy.Time(0))
+            if self.trans.transform.translation.x < 0.99:
+
+                print("found tf")
+                if ((self.end_time-self.start_time) > 10.0) and self.complete_flag == 0:
+                    print("time to start")
+                    self.demo_move(0)
+                    self.complete_flag = 1
+            else:
                 self.start_time = rospy.Time.now().to_sec()
-            if self.flag == 1:
-                self.end_time = rospy.Time.now().to_sec()
-                if ((self.end_time-self.start_time) > 10.0) and self.trans.transform.translation.x < 0.6:
-                    run_manipulation = Empty()
-                    demo_move(run_manipulation)
-                    #Do manipulation
+                print("out of range")
+            # if self.tfBuffer.lookup_transform("base_link","Tag69",rospy.Time(0)) :
+            #     print("Found tf")
+            #     self.trans = self.tfBuffer.lookup_transform("base_link","Tag69",rospy.Time(0))
+            #     if self.flag == 0:
+            #         self.flag = 1
+                    
+            # else:
+            #     if self.flag == 1:
+            #         self.end_time = rospy.Time.now().to_sec()
+            # print(self.end_time - self.start_time)
+            # # if ((self.end_time-self.start_time) > 10.0) and self.trans.transform.translation.x < 0.6:
+            # #     run_manipulation = Empty()
+            # #     demo_move(run_manipulation)
+            # #     #Do manipulation  
         except:
-            self.flag = 0
-            pass
+            print("got here")
+            # self.flag = 0
+            # self.start_time = rospy.Time.now().to_sec() 
+            
         # print(f"The new transform is {trans}")
 
     def demo_move(self,req):
         
         new_get = tool_orientation
         new_get[0] = self.trans.transform.translation.x - 0.1
-        new_get[1] = self.trans.transform.translation.y + 0.06
+        new_get[1] = self.trans.transform.translation.y - 0.0
         new_get[2] = self.trans.transform.translation.z - 0.1
 
         self.move_group.set_pose_target(ur5_home)
@@ -235,8 +254,8 @@ class Coop:
         self.move_group.clear_pose_targets()
 
         new_get = tool_orientation
-        new_get[0] = self.trans.transform.translation.x +  0.05
-        new_get[1] = self.trans.transform.translation.y + 0.06
+        new_get[0] = self.trans.transform.translation.x +  0.1
+        new_get[1] = self.trans.transform.translation.y + 0.00
         new_get[2] = self.trans.transform.translation.z - 0.1
         print("picking up")
         self.move_group.set_pose_target(new_get)
@@ -273,11 +292,7 @@ class Coop:
         self.move_group_16.stop()
         self.move_group_16.clear_pose_targets()
 
-        close_pos = SetPosition()
-        close_pos.id = 1
-        close_pos.position = 700
-        self.ur16e_pub.publish(close_pos)
-        rospy.sleep(3)
+        self.close_ur16e(0)
 
         self.move_group_16.set_pose_target(demo_way_3)
         self.move_group_16.go(wait=True)
