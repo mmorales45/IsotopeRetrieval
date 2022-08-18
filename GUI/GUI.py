@@ -6,11 +6,13 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QGridLayout, QWidget, QMenu,QDe
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import QSize, QTimer
 
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 import os
 import signal
 import subprocess
 import roslaunch
-from LaunchRunClass import *
+from argonne_final_project.LaunchRunClass import *
 
 
 import time
@@ -85,7 +87,7 @@ class CreateGUi(QMainWindow):
         QMainWindow.__init__(self)
 
         self.setMinimumSize(QSize(700, 350))    
-        self.setWindowTitle("VR Baxter Demo") 
+        self.setWindowTitle("Mobile Dual UR System") 
         
         all_buttons = self.createAllButtons()
         
@@ -99,6 +101,7 @@ class CreateGUi(QMainWindow):
         self.bt6.clicked.connect(self.Button6)
 
         self.center()
+  
 
         self.show()
         
@@ -159,8 +162,8 @@ class CreateGUi(QMainWindow):
 
         self.bt3 = self.createSingleButton("PowerOff UR5e",140,width,"red")
         self.bt4 = self.createSingleButton("PowerOff UR16e",140,width,"red")
-        self.bt5 = self.createSingleButton("BrakeRel UR5e",140,width,None)
-        self.bt6 = self.createSingleButton("BrakeRel UR16e",140,width,None)
+        self.bt5 = self.createSingleButton("Release UR5e",140,width,None)
+        self.bt6 = self.createSingleButton("Release UR16e",140,width,None)
 
         self.bt7 = self.createSingleButton("Load Script UR5e ",140,width,None)
         self.bt8 = self.createSingleButton("Load Script UR16e",140,width,None)

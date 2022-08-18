@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+
+import argparse
+
+from copy import deepcopy
+
+import rospy
+
+from std_srvs.srv import Empty, Trigger
+
+class HardwareServices:
+    def __init__(self, hw_cmd):
+        print(hw_cmd)
+        self.__done = False
+        rospy.wait_for_service('/ur5e/ur_hardware_interface/dashboard/power_on')
+        self.__powerOn5e = rospy.ServiceProxy("/ur5e/ur_hardware_interface/dashboard/power_on",Trigger)
+        self.__powerOn16e = rospy.ServiceProxy("/ur16e/ur_hardware_interface/dashboard/power_on",Trigger)
+        
+        self.__powerOff5e = rospy.ServiceProxy("/ur5e/ur_hardware_interface/dashboard/power_off",Trigger)
+        self.__powerOff16e = rospy.ServiceProxy("/ur16e/ur_hardware_interface/dashboard/power_off",Trigger)
+
+        self.__BR5e = rospy.ServiceProxy("/ur5e/ur_hardware_interface/dashboard/brake_release",Trigger)
+        self.__BR16e = rospy.ServiceProxy("/ur16e/ur_hardware_interface/dashboard/brake_release",Trigger)
+        # self.clean_shutdown()
+        # while not rospy.is_shutdown():
+        #     pass
+        if hw_cmd == '-POn_UR5e':
+            self.__powerOn5e()
+        elif hw_cmd == '-POn_UR16e':
+            self.__powerOn16e()
+        elif hw_cmd == '-POff_UR5e':
+            self.__powerOff5e()
+        elif hw_cmd == '-POff_UR16e':
+            self.__powerOff16e()
+        elif hw_cmd == '-BR_UR5e':
+            self.__BR5e()
+        elif hw_cmd == '-BR_UR16e':
+            self.__BR16e()
+
+    def clean_shutdown(self):
+        """Handles ROS shutdown (Ctrl-C) safely."""
+        if not self.__done:
+            rospy.logwarn('Aborting: Shutting down safely...')
+
+        
+
+def main():
+    parser = argparse.ArgumentParser()
+    hardware_group = parser.add_mutually_exclusive_group(required=True)
+
+
+    # if rospy.myargv()[1:] == ''
+    rospy.loginfo("Initializing node... ")
+    rospy.init_node("rsdk_tuck_arms")
+    # rospy.loginfo("%sucking arms" % ("T" if tuck else "Unt",))
+    hardwarer = HardwareServices(rospy.myargv()[1])
+    rospy.on_shutdown(hardwarer.clean_shutdown)
+    rospy.loginfo("Finished tuck")
+
+if __name__ == "__main__":
+    main()
