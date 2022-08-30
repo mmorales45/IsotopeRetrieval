@@ -12,47 +12,16 @@ Robotiq For Noetic
 git clone -b noetic-devel git@github.com:jr-robotics/robotiq.git
 ```
 
+Run the following.
 
-
-Instructions for the Mobile Base to Move
-
-1. Turn on the robot and ensure the knob position is set to Automatic, manual should be used for pushing the robot to a desired position.
-
-2. Connect to the MiR website.
-    - For Marco, the username is `Marco` and the password is `test`.
-    - If you plan on being a long term user, create a new user account through an existing account.
-
-3. The following substeps are useful for preventing errors and headaches down the road.
-    - Ensure the robot's time and the computers times are in sync. This can be done by going into System > Settings > Data & Time and then clicking on laod from device followed by `Save Changes`. Wait for the system to sync up. 
-
-4. On you computer, load the following launchfile.
-    ```
-    roslaunch mir_driver mir.launch
-    ``` 
-    - This will establish a connect between the MiR's and your computer. This may take a few seconds so please be patient. 
-
-5. Now run the hector mapping launchfile to map the area around the robot.
-    ```
-    roslaunch mir_navigation hector_mapping.launch
-    ```
-
-6. Now run the move_base launchfile which will enable the mobile base to be controlled thourgh move base goals.
-    ```
-    roslaunch mir_navigation move_base.xml with_virtual_walls:=false
-    ```
-7. Finally, run the RVIZ file to see visual representaion of the operations.
-    ```
-    rviz -d $(rospack find mir_navigation)/rviz/navigation.rviz
-    ```
-8. Now the map should be visible to you, if not try zooming out to see if the robot and map were offset and then move the camera to that position. 
-    - You can set waypoints/goals by clicking on `Set 2D nav goal` and then clicking on a location and the  releasing at the disired orientation. 
-
-Accessing cameras of MiR base
-
-1. export ROS_MASTER_URI=http://192.168.12.20:11311
-
-2. rqt_image_view
-
+```
+git clone git@github.com:mmorales45/Universal_Robots_ROS_Driver.git
+git clone git@github.com:mmorales45/robotiq.git
+git clone git@github.com:mmorales45/argonne_final_project.git
+git clone git@github.com:mmorales45/sdl_robot_description.git
+git clone git@github.com:mmorales45/dual_arm_moveit_config.git
+git cleon git@github.com:AprilRobotics/apriltag_ros.git
+```
 
 ## For Single Arm Control
 
@@ -110,4 +79,44 @@ rosservice call /UR5e/ur_hardware_interface/dashboard/power_off
 rosservice call /UR16e/ur_hardware_interface/dashboard/power_off
 ```
 There are two ways to control the gripper, using a python or C++ library.
+
+
+Instructions for the Mobile Base to Move
+
+1. Turn on the robot and ensure the knob position is set to Automatic, manual should be used for pushing the robot to a desired position.
+
+2. Connect to the MiR website.
+    - For Marco, the username is `Marco` and the password is `test`.
+    - If you plan on being a long term user, create a new user account through an existing account.
+
+3. The following substeps are useful for preventing errors and headaches down the road.
+    - Ensure the robot's time and the computers times are in sync. This can be done by going into System > Settings > Data & Time and then clicking on laod from device followed by `Save Changes`. Wait for the system to sync up. 
+
+4. On you computer, load the following launchfile.
+    ```
+    roslaunch mir_driver mir.launch
+    ``` 
+    - This will establish a connect between the MiR's and your computer. This may take a few seconds so please be patient. 
+
+5. Now run the hector mapping launchfile to map the area around the robot.
+    ```
+    roslaunch mir_navigation hector_mapping.launch
+    ```
+
+6. Now run the move_base launchfile which will enable the mobile base to be controlled thourgh move base goals.
+    ```
+    roslaunch mir_navigation move_base.xml with_virtual_walls:=false
+    ```
+7. Finally, run the RVIZ file to see visual representaion of the operations.
+    ```
+    rviz -d $(rospack find mir_navigation)/rviz/navigation.rviz
+    ```
+8. Now the map should be visible to you, if not try zooming out to see if the robot and map were offset and then move the camera to that position. 
+    - You can set waypoints/goals by clicking on `Set 2D nav goal` and then clicking on a location and the  releasing at the disired orientation. 
+
+Accessing cameras of MiR base
+
+1. export ROS_MASTER_URI=http://192.168.12.20:11311
+
+2. rqt_image_view
 
