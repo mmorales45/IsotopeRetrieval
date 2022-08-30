@@ -20,7 +20,10 @@ git clone git@github.com:mmorales45/robotiq.git
 git clone git@github.com:mmorales45/argonne_final_project.git
 git clone git@github.com:mmorales45/sdl_robot_description.git
 git clone git@github.com:mmorales45/dual_arm_moveit_config.git
-git cleon git@github.com:AprilRobotics/apriltag_ros.git
+git clone git@github.com:AprilRobotics/apriltag_ros.git
+
+sudo apt-get install ros-$ROS_DISTRO-moveit-visual-tools
+rosdep install --from-paths src --ignore-src -r -y
 ```
 
 ## For Single Arm Control
