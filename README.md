@@ -25,13 +25,14 @@ sudo apt-get install ros-$ROS_DISTRO-moveit-visual-tools
 
 cd ..
 rosdep install --from-paths src --ignore-src -r -y
+catkin_make
 ```
 
 ## For Single Arm Control
 
 ### UR5e
 ```
-roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=192.168.12.248 s
+roslaunch ur_robot_driver ur5e_bringup.launch robot_ip:=192.168.12.248
 rosservice call /ur_hardware_interface/dashboard/brake_release
 rosservice call /ur_hardware_interface/dashboard/play
 roslaunch ur5_moveit_config ur5_moveit_planning_execution.launch
@@ -84,8 +85,19 @@ rosservice call /UR16e/ur_hardware_interface/dashboard/power_off
 ```
 There are two ways to control the gripper, using a python or C++ library.
 
+# Running the Demo
 
-Instructions for the Mobile Base to Move
+1. Run the drivers
+    ```
+    roslaunch argonne_final_project dual_arm_bringup.launch
+    ```
+2. Run the camera and main nodes.
+    ```
+    roslaunch argonne_final_project marco.launch
+    ```
+
+
+## Instructions for the Mobile Base to Move
 
 1. Turn on the robot and ensure the knob position is set to Automatic, manual should be used for pushing the robot to a desired position.
 
