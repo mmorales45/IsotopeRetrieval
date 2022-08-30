@@ -15,12 +15,12 @@ git clone -b noetic-devel git@github.com:jr-robotics/robotiq.git
 Run the following when in the src folder of your workspace.
 
 ```
-git clone git@github.com:mmorales45/Universal_Robots_ROS_Driver.git
-git clone git@github.com:mmorales45/robotiq.git
-git clone git@github.com:mmorales45/argonne_final_project.git
-git clone git@github.com:mmorales45/sdl_robot_description.git
-git clone git@github.com:mmorales45/dual_arm_moveit_config.git
-git clone git@github.com:AprilRobotics/apriltag_ros.git
+git clone https://github.com/mmorales45/Universal_Robots_ROS_Driver.git
+git clone https://github.com/mmorales45/robotiq.git
+git clone https://github.com/mmorales45/argonne_final_project.git
+git clone https://github.com/mmorales45/sdl_robot_description.git
+git clone https://github.com/mmorales45/dual_arm_moveit_config.git
+git clone https://github.com/AprilRobotics/apriltag_ros.git
 sudo apt-get install ros-$ROS_DISTRO-moveit-visual-tools
 
 cd ..
