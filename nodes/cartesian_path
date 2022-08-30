@@ -11,7 +11,7 @@ from math import pi
 from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
 from std_srvs.srv import Empty, EmptyResponse
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, PoseArray
 from argonne_final_project.srv import CPose, Quat
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
@@ -35,9 +35,10 @@ class Coop:
         self.go_up_srv = rospy.Service("marco/go_up", Empty , self.go_up)
         self.move_cart_srv = rospy.Service("marco/step", CPose , self.move_cart)
         self.get_current_pose_srv = rospy.Service("marco/get_current_pose", Empty , self.get_current_pose)
+        self.get_joint_states_srv = rospy.Service("marco/get_joint_states", Empty , self.get_joint_states)
         self.get_rpy_srv = rospy.Service("marco/get_RPY", Quat , self.convert_to_RPY)
     
-
+        self.joint_states = []
         self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
 
 
@@ -45,13 +46,19 @@ class Coop:
         # temp_pos = self.move_group.get_current_pose("manipulator")
         # print("got here")
         pass
+    def js_sub(self,js):
+        self.joint_states = js
+    
+    def get_joint_states(self,req):
+        print()
+        
 
     def go_up(self,req):
         scale = 1
         waypoints = []
 
         wpose = self.move_group_5.get_current_pose().pose
-        wpose.position.x += scale * 0.1  # First move up (z)
+        wpose.position.x -= 0.03  # First move up (z)
         # wpose.position.y += scale * 0.2  # and sideways (y)
         waypoints.append(copy.deepcopy(wpose))
 

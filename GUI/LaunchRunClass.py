@@ -2,14 +2,17 @@
 #This is a class to launch and run nodes. See the example at the bottom
 import roslaunch, rospkg, os,rospy
 from time import sleep
-
+print('howdy')
 
 class CustomNodeRun(object):
 
-    def __init__(self,package,executable,args = ''):
+    def __init__(self,package,executable,args = '',args2 = ''):
+        print('got here')
         self.package = package
         self.executable = executable 
+        print(args)
         self.args = args
+        self.args2 = args2
         self.node = roslaunch.core.Node(package, executable, output = "screen",args=self.args)
 
         self.launch = roslaunch.scriptapi.ROSLaunch()
