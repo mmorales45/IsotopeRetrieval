@@ -174,6 +174,10 @@ class CreateGUi(QMainWindow):
         self.bt5.clicked.connect(self.Button5)
         self.bt6.clicked.connect(self.Button6)
         self.bt9.clicked.connect(self.ButtonReturn)
+        self.bt13.clicked.connect(self.)
+        self.bt14.clicked.connect(self.)
+        self.bt15.clicked.connect(self.)
+        self.bt16.clicked.connect(self.)
         # self.bt10.clicked.connect(self.Button10)
         # self.bt11.clicked.connect(self.Button11)
         
@@ -197,7 +201,19 @@ class CreateGUi(QMainWindow):
         
     def Button6(self):
         br16e()
-    
+
+    def Button6(self):
+        br16e()
+
+    def Button6(self):
+        br16e()
+
+    def Button6(self):
+        br16e()
+
+    def Button6(self):
+        br16e()
+
     def ButtonReturn(self):
         self.returnWindow()
 
@@ -254,10 +270,16 @@ class CreateGUi(QMainWindow):
         self.bt11 = self.createSingleButton("Release Stop",140,width,"green")
         self.bt12 = self.createSingleButton("Test",140,width,None)
 
+        self.bt13 = self.createSingleButton("Start 5e Script",140,width,"blue")
+        self.bt14 = self.createSingleButton("Start 16e Script",140,width,"blue")
+        self.bt15 = self.createSingleButton("Stop 5e Script",140,width,"blue")
+        self.bt16 = self.createSingleButton("Stop 6e Script",140,width,"blue")
+
         row1 =  [self.bt1, self.bt2]
         row2 = [self.bt3, self.bt4, self.bt5, self.bt6]
         row3 = [ self.bt7, self.bt8, self.bt9]
         row4  = [ self.bt10, self.bt11, self.bt12]
+        row5  = [ self.bt13, self.bt14, self.bt15,self.bt16]
 
         all_buttons = row1 + row2
         self.space_out(row1,space=150,x=200,y=50)
@@ -267,6 +289,7 @@ class CreateGUi(QMainWindow):
         #Third Row
         self.space_out(row3,space=150,x=50,y=150)
         self.space_out(row4,space=150,x=50,y=200)
+        self.space_out(row5,space=150,x=50,y=250)
         return all_buttons
     
     def returnWindow(self):                                             # <===
@@ -449,7 +472,13 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = Window()
     rospy.init_node('GUIII11')
+    
+    ur5e_step_srv = rospy.ServiceProxy("marco/step", CPose)
+    ur_poses_srv = rospy.ServiceProxy("marco/get_current_pose", Empty)
 
     ur5e_step_srv = rospy.ServiceProxy("marco/step", CPose)
     ur_poses_srv = rospy.ServiceProxy("marco/get_current_pose", Empty)
+    ur5e_step_srv = rospy.ServiceProxy("marco/step", CPose)
+    ur_poses_srv = rospy.ServiceProxy("marco/get_current_pose", Empty)
+
     sys.exit( app.exec_() )
