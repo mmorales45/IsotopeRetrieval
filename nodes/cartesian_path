@@ -4,6 +4,7 @@
 import sys
 import copy
 import rospy
+
 import moveit_commander
 import moveit_msgs.msg
 import geometry_msgs.msg
@@ -16,6 +17,20 @@ from argonne_final_project.srv import CPose, Quat
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 
+from argonne_final_project.robotiq_Control_lib import RobotiqControl
+from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output  as outputMsg 
+import moveit_commander
+import tf2_ros
+from sensor_msgs.msg import JointState
+import copy
+
+tool_orientation = [0,0,0,-0.50847, 0.56835, -0.50546, 0.40366]
+ur5_home = [0.748, 0.10449, 1.0673,-0.47384, 0.59388, -0.53804, 0.36509]
+demo_way_1 = [-0.36236, 0.58945, 1.4227,0.55579, -0.44754, 0.50539, -0.48517]
+waypoint5_ = [0.71778, 0.33905, 1.2487,-0.71671, 0.10686, 0.012238, 0.68903]
+ur5_goal = [0.15664, 0.51908, 1.2297,-0.54132, -0.41544, 0.47984, 0.55148]
+demo_way_2 = [-0.075564, 0.5955, 1.4107,-0.47976, 0.69629, -0.4586, 0.2733]
+demo_way_3 = [-0.049535, 0.56748, 1.4764,-0.44985, 0.72586, -0.41791, 0.31002]
 
 
 
@@ -25,27 +40,151 @@ class Coop:
         '''
         Initialize variables and load parameters.
         '''
+        #Set up moveit for both arms
         moveit_commander.roscpp_initialize(sys.argv)
         self.robot = moveit_commander.RobotCommander()
         group_name = "ur5e"
         self.move_group_5 = moveit_commander.MoveGroupCommander(group_name)
         group_name_16 = "ur16e"
         self.move_group_16 = moveit_commander.MoveGroupCommander(group_name_16)
+        #Setup grippers and services. Create Buffer and Listener
+        self.setup_grippers()
+        self.create_srvs()
+        self.reset_arms()
+        self.tfBuffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tfBuffer)
 
+        self.trans = 0
+        self.joint_states = []
+        self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
+
+    def reset_arms(self):
+        self.move_group_5.set_pose_target(ur5_home)
+        self.move_group_5.go(wait=True)
+        self.move_group_5.stop()
+        self.move_group_5.clear_pose_targets()
+
+        self.move_group_16.set_pose_target(demo_way_1)
+        self.move_group_16.go(wait=True)
+        self.move_group_16.stop()
+        self.move_group_16.clear_pose_targets()
+
+    def setup_grippers(self):
+        rospy.sleep(2.0)
+        self.ur5e_gripper = RobotiqControl()
+        self.ur16e_gripper = RobotiqControl()
+        command = self.ur5e_gripper.reset()
+        command_16 = self.ur16e_gripper.reset()
+        self.ur5e_gripper_pub.publish(command)
+        self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
+        command = self.ur5e_gripper.activate()
+        command_16 = self.ur16e_gripper.activate()
+        self.ur5e_gripper_pub.publish(command)
+        self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
+
+    def create_srvs(self):
         self.go_up_srv = rospy.Service("marco/go_up", Empty , self.go_up)
         self.move_cart_srv = rospy.Service("marco/step", CPose , self.move_cart)
         self.get_current_pose_srv = rospy.Service("marco/get_current_pose", Empty , self.get_current_pose)
         self.get_joint_states_srv = rospy.Service("marco/get_joint_states", Empty , self.get_joint_states)
         self.get_rpy_srv = rospy.Service("marco/get_RPY", Quat , self.convert_to_RPY)
-    
-        self.joint_states = []
-        self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
 
+        self.analyze_object_srv = rospy.Service("GUI/analyze_object", Empty , self.analyze_object)
+        self.retrieve_object_srv = rospy.Service("GUI/retrieve_object", Empty , self.retrieve_object)
+        self.disassemble_object_srv = rospy.Service("GUI/disassemble_object", Empty , self.disassemble_object)
+        self.assememble_object_srv = rospy.Service("GUI/assememble_object", Empty , self.assememble_object)
 
     def main_loop(self,timer):
-        # temp_pos = self.move_group.get_current_pose("manipulator")
-        # print("got here")
         pass
+        try:
+            self.trans = self.tfBuffer.lookup_transform("base_link","Tag69",rospy.Time(0))
+        except:
+            print("Failed to find TF")
+
+    def analyze_object(self):
+        self.move_group_5.set_pose_target(waypoint5_)
+        self.move_group_5.go(wait=True)
+        self.move_group_5.stop()
+        self.move_group_5.clear_pose_targets()
+
+        self.move_group_5.set_pose_target(ur5_goal)
+        self.move_group_5.go(wait=True)
+        self.move_group_5.stop()
+        self.move_group_5.clear_pose_targets()
+
+        return Empty
+
+    def retrieve_object(self):
+        new_get = tool_orientation
+        new_get[0] = self.trans.transform.translation.x - 0.1
+        new_get[1] = self.trans.transform.translation.y - 0.0
+        new_get[2] = self.trans.transform.translation.z - 0.1
+
+        self.move_group_5.set_pose_target(ur5_home)
+        self.move_group_5.go(wait=True)
+        self.move_group_5.stop()
+        self.move_group_5.clear_pose_targets()
+        print("just before picking it up")
+        self.move_group_5.set_pose_target(new_get)
+        self.move_group_5.go(wait=True)
+        self.move_group_5.stop()
+        self.move_group_5.clear_pose_targets()
+
+        new_get = tool_orientation
+        new_get[0] = self.trans.transform.translation.x +  0.1
+        new_get[1] = self.trans.transform.translation.y + 0.00
+        new_get[2] = self.trans.transform.translation.z - 0.1
+        print("picking up")
+        self.move_group_5.set_pose_target(new_get)
+        self.move_group_5.go(wait=True)
+        self.move_group_5.stop()
+        self.move_group_5.clear_pose_targets()
+
+        self.close_hand(0)
+
+        new_get[2] = new_get[2] + 0.1
+        self.move_group_5.set_pose_target(new_get)
+        self.move_group_5.go(wait=True)
+        self.move_group_5.stop()
+        self.move_group_5.clear_pose_targets()
+
+        self.move_group_5.set_pose_target(ur5_home)
+        self.move_group_5.go(wait=True)
+        self.move_group_5.stop()
+        self.move_group.clear_pose_targets()
+        
+        return Empty
+
+    def disassemble_object(self):
+        self.move_group_16.set_pose_target(demo_way_2)
+        self.move_group_16.go(wait=True)
+        self.move_group_16.stop()
+        self.move_group_16.clear_pose_targets()
+
+        self.close_ur16e(0)
+
+        self.move_group_16.set_pose_target(demo_way_3)
+        self.move_group_16.go(wait=True)
+        self.move_group_16.stop()
+        self.move_group_16.clear_pose_targets()
+        return Empty
+
+    def assememble_object(self):
+        self.move_group_16.set_pose_target(demo_way_3)
+        self.move_group_16.go(wait=True)
+        self.move_group_16.stop()
+        self.move_group_16.clear_pose_targets()
+
+        self.close_ur16e(0)
+
+        self.move_group_16.set_pose_target(demo_way_2)
+        self.move_group_16.go(wait=True)
+        self.move_group_16.stop()
+        self.move_group_16.clear_pose_targets()
+        return Empty
+
     def js_sub(self,js):
         self.joint_states = js
     
@@ -83,13 +222,26 @@ class Coop:
         print(req.Pose)
         waypoints = []
         waypoints.append(req.Pose)
-        (plan, fraction) = self.move_group_5.compute_cartesian_path(
-                                        waypoints,   # waypoints to follow
-                                        0.01,        # eef_step
-                                        0.0)
-        plan = self.move_group_5.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
-        print(fraction)
-        self.move_group_5.execute(plan,wait=True)
+        if req.name == "ur5e":
+
+            (plan, fraction) = self.move_group_5.compute_cartesian_path(
+                waypoints,   # waypoints to follow
+                0.01,        # eef_step
+                0.0)
+            plan = self.move_group_5.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+            print(fraction)
+            self.move_group_5.execute(plan,wait=True)
+
+        elif req.name == "ur16e":
+            (plan, fraction) = self.move_group_16.compute_cartesian_path(
+                waypoints,   # waypoints to follow
+                0.01,        # eef_step
+                0.0)
+            plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+            print(fraction)
+            self.move_group_16.execute(plan,wait=True) 
+        else:
+            print("Please enter a valid name!")
         return EmptyResponse()
 
     def go_down(self,req):

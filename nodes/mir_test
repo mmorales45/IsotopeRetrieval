@@ -15,14 +15,15 @@ host = 'http://' + ip + '/api/v2.0.0/'   # if not connected to robot
 class mobile_base:
     """Node to test basic functions of UR robot"""
     def __init__(self): 
-        headers = {}
-        headers['Content-Type'] = 'application/json'
-        headers['Authorization'] = 'Basic bWFyY286OWY4NmQwODE4ODRjN2Q2NTlhMmZlYWEwYzU1YWQwMTVhM2JmNGYxYjJiMGI4MjJjZDE1ZDZjMTViMGYwMGEwOA=='
-        self.mission_service = rospy.Service("marco/start_mission", Empty,self.Mission_Start)
+        self.headers = {}
+        self.headers['Content-Type'] = 'application/json'
+        self.headers['Authorization'] = 'Basic bWFyY286OWY4NmQwODE4ODRjN2Q2NTlhMmZlYWEwYzU1YWQwMTVhM2JmNGYxYjJiMGI4MjJjZDE1ZDZjMTViMGYwMGEwOA=='
+        self.mission_service_end = rospy.Service("marco/moveto_goal", Empty,self.Mission_Start)
+        self.mission_service_start = rospy.Service("marco/moveto_start", Empty,self.Mission_Reset)
 
         # print(headers)
 
-        get_missions = requests.get(host + 'missions',headers = headers)
+        get_missions = requests.get(host + 'missions',headers = self.headers)
         list_missions = json.loads(get_missions.text)
         print("Available Missions: " + str(len(list_missions)))
         for i in list_missions:
@@ -33,11 +34,14 @@ class mobile_base:
         # post_mission = requests.post(host + 'mission_queue', json = mission_id, headers = headers)
 
     def Mission_Start(self,req):
-        # get_missions = requests.get(host + 'missions',headers = headers)
-        # print(get_missions.text)
-
         mission_id = {"mission_id": "aae45adf-d82a-11ec-84ed-00012978eb25"}
-        post_mission = requests.post(host + 'mission_queue', json = mission_id, headers = headers)
+        post_mission = requests.post(host + 'mission_queue', json = mission_id, headers = self.headers)
+    
+    def Mission_Reset(self,req):
+        mission_id = {"mission_id": "aae45adf-d82a-11ec-84ed-00012978eb25"}
+        post_mission = requests.post(host + 'mission_queue', json = mission_id, headers = self.headers)
+    
+    
 
 
 def main(): #The main function.

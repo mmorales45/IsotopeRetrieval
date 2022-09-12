@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+import enum
+import sys
+
+import rospy
+import actionlib
+from std_srvs.srv import Empty, EmptyResponse
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from trajectory_msgs.msg import JointTrajectoryPoint
+from controller_manager_msgs.srv import SwitchControllerRequest, SwitchController
+from controller_manager_msgs.srv import LoadControllerRequest, LoadController
+import geometry_msgs.msg as geometry_msgs
+from argonne_final_project.msg import SetPosition
+
+import time
+import signal
+from argonne_final_project.robotiq_Control_lib import RobotiqControl
+from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output  as outputMsg 
+import moveit_commander
+import tf2_ros
+from sensor_msgs.msg import JointState
+import copy
+
+class Gui_States:
+    def __init__(self): 
+        
+
+
+def main(): #The main function.
+    rospy.init_node("Gui_States")
+    try:
+        move_arm =Gui_States()
+        rospy.spin()
+
+    except rospy.ROSInterruptException:
+        return
+    except KeyboardInterrupt:
+        return
+
+if __name__ == "__main__":
+    # signal.signal(signal.SIGINT, handler)
+    main()
