@@ -55,7 +55,7 @@ def main():
     # rospy.loginfo("%sucking arms" % ("T" if tuck else "Unt",))
     hardwarer = HardwareServices(rospy.myargv()[1])
     rospy.on_shutdown(hardwarer.clean_shutdown)
-    rospy.loginfo("Finished tuck")
+    rospy.loginfo("Finished tuckerrr")
 
 if __name__ == "__main__":
     main()

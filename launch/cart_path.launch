@@ -8,4 +8,6 @@
     <!-- Laucnh the node -->
     <node name="cartesian_path" pkg="argonne_final_project" type="cartesian_path" output="screen"/>
 
+    <!-- Launch IntelCam and AprilTags-->
+    <include file="$(find argonne_final_project)/launch/intel_cam.launch" pass_all_args="true"/>
 </launch>

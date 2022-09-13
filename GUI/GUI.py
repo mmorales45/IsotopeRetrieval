@@ -52,55 +52,55 @@ atexit.register(exit_handler)
 
 
         
-# list_of_classes = []
-# def kill_all():
-# 	print("Stoping all Processes...")
-# 	for class_name in list_of_classes:
-# 		class_name.stop()
-# 	print("All Processes Stopped")
+list_of_classes = []
+def kill_all():
+	print("Stoping all Processes...")
+	for class_name in list_of_classes:
+		class_name.stop()
+	print("All Processes Stopped")
 
 
-# powerOnur5e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POn_UR5e")
-# list_of_classes.append(powerOnur5e)
+powerOnur5e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POn_UR5e")
+list_of_classes.append(powerOnur5e)
 
-# def powerOn5e():
-#     print("Powering On UR5e")
-#     powerOnur5e.start()
+def powerOn5e():
+    print("Powering On UR5e")
+    powerOnur5e.start()
 
-# powerOnur16e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POn_UR16e")
-# list_of_classes.append(powerOnur5e)
+powerOnur16e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POn_UR16e")
+list_of_classes.append(powerOnur5e)
 
-# def powerOn16e():
-#     print("Powering On UR16e")
-#     powerOnur16e.start()
-# ##
-# powerOffur5e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POff_UR5e")
-# list_of_classes.append(powerOffur5e)
+def powerOn16e():
+    print("Powering On UR16e")
+    powerOnur16e.start()
+##
+powerOffur5e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POff_UR5e")
+list_of_classes.append(powerOffur5e)
 
-# def powerOff5e():
-#     print("Powering Off UR16e")
-#     powerOffur5e.start()
+def powerOff5e():
+    print("Powering Off UR16e")
+    powerOffur5e.start()
 
-# powerOffur16e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POff_UR16e")
-# list_of_classes.append(powerOffur16e)
+powerOffur16e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POff_UR16e")
+list_of_classes.append(powerOffur16e)
 
-# def powerOff16e():
-#     print("Powering Off UR16e")
-#     powerOffur16e.start()
-# ##
-# BRur5e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-BR_UR5e")
-# list_of_classes.append(BRur5e)
+def powerOff16e():
+    print("Powering Off UR16e")
+    powerOffur16e.start()
+##
+BRur5e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-BR_UR5e")
+list_of_classes.append(BRur5e)
 
-# def br5e():
-#     print("Powering Off UR16e")
-#     BRur5e.start()
+def br5e():
+    print("Powering Off UR16e")
+    BRur5e.start()
 
-# BRur16e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-BR_UR16e","IT WORKED")
-# list_of_classes.append(BRur16e)     
+BRur16e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-BR_UR16e")
+list_of_classes.append(BRur16e)     
 
-# def br16e():
-#     print("Powering Off UR16e")
-#     BRur16e.start()
+def br16e():
+    print("Powering Off UR16e")
+    BRur16e.start()
 
 
 class Window(QMainWindow):
@@ -185,6 +185,8 @@ class CreateGUi(QMainWindow):
         self.bt4.clicked.connect(self.Button4)
         self.bt5.clicked.connect(self.Button5)
         self.bt6.clicked.connect(self.Button6)
+        self.bt7.clicked.connect(self.Button7)
+        self.bt8.clicked.connect(self.Button8)
         self.bt9.clicked.connect(self.ButtonReturn)
         self.bt17.clicked.connect(self.Button17)
         self.bt18.clicked.connect(self.Button18)
@@ -213,6 +215,12 @@ class CreateGUi(QMainWindow):
         
     def Button6(self):
         br16e()
+
+    def Button7(self):
+        ur5e_play_srv()
+        
+    def Button8(self):
+        ur16e_play_srv()
 
     def Button17(self):
         analyze_object_srv()
@@ -271,19 +279,19 @@ class CreateGUi(QMainWindow):
 
         self.bt3 = self.createSingleButton("PowerOff UR5e",140,width,"red")
         self.bt4 = self.createSingleButton("PowerOff UR16e",140,width,"red")
-        self.bt5 = self.createSingleButton("Release UR5e",140,width,"orange")
-        self.bt6 = self.createSingleButton("Release UR16e",140,width,"orange")
+        self.bt5 = self.createSingleButton("RelBrake UR5e",140,width,"orange")
+        self.bt6 = self.createSingleButton("RelBrake UR16e",140,width,"orange")
 
         self.bt7 = self.createSingleButton("Load Script UR5e ",140,width,"blue")
         self.bt8 = self.createSingleButton("Load Script UR16e",140,width,"blue")
         self.bt9 = self.createSingleButton("Return To Main",140,width,None)
 
-        self.bt10 = self.createSingleButton("Stop",140,width,"red")
-        self.bt11 = self.createSingleButton("Release Stop",140,width,"green")
+        self.bt10 = self.createSingleButton("Stop Script UR5e",140,width,"red")
+        self.bt11 = self.createSingleButton("Stop Script UR16e",140,width,"red")
         self.bt12 = self.createSingleButton("Test",140,width,None)
 
-        self.bt13 = self.createSingleButton("Start 5e Script",140,width,"blue")
-        self.bt14 = self.createSingleButton("Start 16e Script",140,width,"blue")
+        self.bt13 = self.createSingleButton("Unlock UR5e STOP",140,width,"blue")
+        self.bt14 = self.createSingleButton("Unlock UR16e STOP",140,width,"blue")
         self.bt15 = self.createSingleButton("Stop 5e Script",140,width,"blue")
         self.bt16 = self.createSingleButton("Stop 6e Script",140,width,"blue")
 
@@ -340,10 +348,18 @@ class ActionsCLass(QMainWindow):
         self.show()
         
     def Button1(self):
-        analyze_object_srv()
+        a = Empty()
+        try:
+            analyze_object_srv()
+        except:
+            pass
 
     def Button2(self):
-        retrieve_object_srv()
+        a = Empty()
+        try:
+            retrieve_object_srv()
+        except:
+            pass
 
     def Button3(self):
         assememble_object_srv()
@@ -352,10 +368,10 @@ class ActionsCLass(QMainWindow):
         disassemble_object_srv()
     
     def Button5(self):
-        goto_goal_srv()
+        goto_goal_srv(0)
         
     def Button6(self):
-        goto_start_srv()
+        goto_start_srv(0)
 
 
     def ButtonReturn(self):
@@ -410,9 +426,14 @@ class ActionsCLass(QMainWindow):
         self.bt8 = self.createSingleButton("PlaceHolder",140,width,"blue")
         self.bt9 = self.createSingleButton("Return To Main",140,width,None)
 
+        self.bt10 = self.createSingleButton("5e Gripper Open",140,width,"green")
+        self.bt11 = self.createSingleButton("5e Gripper Close",140,width,"green")
+        self.bt12 = self.createSingleButton("16e Gripper Open",140,width,"green")
+        self.bt13 = self.createSingleButton("16e Gripper Close",140,width,"green")
         row1 =  [self.bt1, self.bt2]
         row2 = [self.bt3, self.bt4, self.bt5, self.bt6]
         row3 = [ self.bt7, self.bt8, self.bt9]
+        row4 = [ self.bt10, self.bt11, self.bt12,self.bt13]
 
 
         all_buttons = row1 + row2
@@ -422,6 +443,7 @@ class ActionsCLass(QMainWindow):
 
         #Third Row
         self.space_out(row3,space=150,x=50,y=150)
+        self.space_out(row4,space=150,x=50,y=200)
         return all_buttons
     
     def returnWindow(self):                                             # <===
@@ -619,8 +641,15 @@ if __name__ == "__main__":
     retrieve_object_srv = rospy.ServiceProxy("GUI/retrieve_object", Empty)
     disassemble_object_srv = rospy.ServiceProxy("GUI/disassemble_object", Empty)
     assememble_object_srv = rospy.ServiceProxy("GUI/assememble_object", Empty)
+    ur5e_play_srv = rospy.ServiceProxy("/ur5e/ur_hardware_interface/dashboard/play", Trigger)
+    ur16e_play_srv = rospy.ServiceProxy("/ur16e/ur_hardware_interface/dashboard/play", Trigger)
 
     goto_goal_srv = rospy.ServiceProxy("marco/moveto_goal", Empty)
     goto_start_srv = rospy.ServiceProxy("marco/moveto_start", Empty)
+
+    gripper_5e_open_srv = rospy.ServiceProxy("GUI/5e_open", Empty)
+    gripper_5e_close_srv = rospy.ServiceProxy("GUI/5e_close", Empty)
+    gripper_16e_open_srv = rospy.ServiceProxy("GUI/16e_open", Empty)
+    gripper_16e_close_srv = rospy.ServiceProxy("GUI/16e_close", Empty)
 
     sys.exit( app.exec_() )

@@ -48,6 +48,8 @@ class Coop:
         group_name_16 = "ur16e"
         self.move_group_16 = moveit_commander.MoveGroupCommander(group_name_16)
         #Setup grippers and services. Create Buffer and Listener
+        self.ur5e_gripper_pub = rospy.Publisher('ur5e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
+        self.ur16e_gripper_pub = rospy.Publisher('ur16e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
         self.setup_grippers()
         self.create_srvs()
         self.reset_arms()
@@ -57,6 +59,36 @@ class Coop:
         self.trans = 0
         self.joint_states = []
         self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
+
+    def close_hand(self,req):
+
+        command = self.ur5e_gripper.close()
+        self.ur5e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+        return EmptyResponse()
+
+    def open_hand(self,req):
+
+        command = self.ur5e_gripper.open()
+        self.ur5e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+
+        return EmptyResponse()
+
+    def close_ur16e(self,req):
+
+        command = self.ur5e_gripper.close()
+        self.ur16e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+        return EmptyResponse()
+
+    def open_ur16e(self,req):
+
+        command = self.ur5e_gripper.open()
+        self.ur16e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+
+        return EmptyResponse()
 
     def reset_arms(self):
         self.move_group_5.set_pose_target(ur5_home)
@@ -96,6 +128,8 @@ class Coop:
         self.disassemble_object_srv = rospy.Service("GUI/disassemble_object", Empty , self.disassemble_object)
         self.assememble_object_srv = rospy.Service("GUI/assememble_object", Empty , self.assememble_object)
 
+        self.open
+
     def main_loop(self,timer):
         pass
         try:
@@ -103,7 +137,7 @@ class Coop:
         except:
             print("Failed to find TF")
 
-    def analyze_object(self):
+    def analyze_object(self,req):
         self.move_group_5.set_pose_target(waypoint5_)
         self.move_group_5.go(wait=True)
         self.move_group_5.stop()
@@ -116,7 +150,7 @@ class Coop:
 
         return Empty
 
-    def retrieve_object(self):
+    def retrieve_object(self,req):
         new_get = tool_orientation
         new_get[0] = self.trans.transform.translation.x - 0.1
         new_get[1] = self.trans.transform.translation.y - 0.0
@@ -153,11 +187,11 @@ class Coop:
         self.move_group_5.set_pose_target(ur5_home)
         self.move_group_5.go(wait=True)
         self.move_group_5.stop()
-        self.move_group.clear_pose_targets()
+        self.move_group_5.clear_pose_targets()
         
         return Empty
 
-    def disassemble_object(self):
+    def disassemble_object(self,req):
         self.move_group_16.set_pose_target(demo_way_2)
         self.move_group_16.go(wait=True)
         self.move_group_16.stop()
@@ -171,7 +205,7 @@ class Coop:
         self.move_group_16.clear_pose_targets()
         return Empty
 
-    def assememble_object(self):
+    def assememble_object(self,req):
         self.move_group_16.set_pose_target(demo_way_3)
         self.move_group_16.go(wait=True)
         self.move_group_16.stop()

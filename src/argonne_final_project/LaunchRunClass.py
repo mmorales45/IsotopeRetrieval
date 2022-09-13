@@ -6,7 +6,7 @@ from time import sleep
 
 class CustomNodeRun(object):
 
-    def __init__(self,package,executable,args = '',args2 = ''):
+    def __init__(self,package,executable,args = ''):
         print("this this work")
         self.package = package
         self.executable = executable 
