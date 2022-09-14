@@ -128,6 +128,11 @@ class Coop:
         self.disassemble_object_srv = rospy.Service("GUI/disassemble_object", Empty , self.disassemble_object)
         self.assememble_object_srv = rospy.Service("GUI/assememble_object", Empty , self.assememble_object)
 
+        self.gripper_5e_open_srv = rospy.Service("GUI/5e_open", Empty , self.open_hand)
+        self.gripper_16e_open_srv = rospy.Service("GUI/16e_open", Empty , self.close_hand)
+        self.gripper_5e_close_srv = rospy.Service("GUI/5e_close", Empty , self.open_ur16e)
+        self.gripper_16e_close_srv = rospy.Service("GUI/16e_close", Empty , self.close_ur16e)
+
         self.open
 
     def main_loop(self,timer):

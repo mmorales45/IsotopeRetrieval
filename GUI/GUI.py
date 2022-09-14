@@ -188,6 +188,12 @@ class CreateGUi(QMainWindow):
         self.bt7.clicked.connect(self.Button7)
         self.bt8.clicked.connect(self.Button8)
         self.bt9.clicked.connect(self.ButtonReturn)
+        self.bt10.clicked.connect(self.Button10)
+        self.bt11.clicked.connect(self.Button11)
+        self.bt13.clicked.connect(self.Button13)
+        self.bt14.clicked.connect(self.Button14)
+        self.bt15.clicked.connect(self.Button15)
+        self.bt16.clicked.connect(self.Button16)
         self.bt17.clicked.connect(self.Button17)
         self.bt18.clicked.connect(self.Button18)
         self.bt19.clicked.connect(self.Button19)
@@ -221,6 +227,24 @@ class CreateGUi(QMainWindow):
         
     def Button8(self):
         ur16e_play_srv()
+
+    def Button10(self):
+        ur5e_stop_srv()
+        
+    def Button11(self):
+        ur16e_stop_srv()
+
+    def Button13(self):
+        ur5e_proRelease_srv()
+        
+    def Button14(self):
+        ur16e_closePOP_srv()
+    
+    def Button15(self):
+        ur5e_closePOP_srv()
+        
+    def Button16(self):
+        ur16e_proRelease_srv()
 
     def Button17(self):
         analyze_object_srv()
@@ -292,8 +316,8 @@ class CreateGUi(QMainWindow):
 
         self.bt13 = self.createSingleButton("Unlock UR5e STOP",140,width,"blue")
         self.bt14 = self.createSingleButton("Unlock UR16e STOP",140,width,"blue")
-        self.bt15 = self.createSingleButton("Stop 5e Script",140,width,"blue")
-        self.bt16 = self.createSingleButton("Stop 6e Script",140,width,"blue")
+        self.bt15 = self.createSingleButton("Close 5e Popup",140,width,"blue")
+        self.bt16 = self.createSingleButton("Close 16e Popup",140,width,"blue")
 
         self.bt17 = self.createSingleButton("Analyze",140,width,"blue")
         self.bt18 = self.createSingleButton("Retrieve",140,width,"blue")
@@ -316,7 +340,7 @@ class CreateGUi(QMainWindow):
         self.space_out(row3,space=150,x=50,y=150)
         self.space_out(row4,space=150,x=50,y=200)
         self.space_out(row5,space=150,x=50,y=250)
-        self.space_out(row6,space=150,x=50,y=250)
+        self.space_out(row6,space=150,x=50,y=300)
         return all_buttons
     
     def returnWindow(self):                                             # <===
@@ -643,6 +667,15 @@ if __name__ == "__main__":
     assememble_object_srv = rospy.ServiceProxy("GUI/assememble_object", Empty)
     ur5e_play_srv = rospy.ServiceProxy("/ur5e/ur_hardware_interface/dashboard/play", Trigger)
     ur16e_play_srv = rospy.ServiceProxy("/ur16e/ur_hardware_interface/dashboard/play", Trigger)
+
+    ur5e_stop_srv = rospy.ServiceProxy("/ur5e/ur_hardware_interface/dashboard/stop", Trigger)
+    ur16e_stop_srv = rospy.ServiceProxy("/ur16e/ur_hardware_interface/dashboard/stop", Trigger)
+
+    ur5e_proRelease_srv = rospy.ServiceProxy("/ur5e/ur_hardware_interface/dashboard/unlock_protective_stop", Trigger)
+    ur16e_proRelease_srv = rospy.ServiceProxy("/ur16e/ur_hardware_interface/dashboard/unlock_protective_stop", Trigger)
+
+    ur5e_closePOP_srv = rospy.ServiceProxy("/ur5e/ur_hardware_interface/dashboard/close_safety_popup", Trigger)
+    ur16e_closePOP_srv = rospy.ServiceProxy("/ur16e/ur_hardware_interface/dashboard/close_safety_popup", Trigger)
 
     goto_goal_srv = rospy.ServiceProxy("marco/moveto_goal", Empty)
     goto_start_srv = rospy.ServiceProxy("marco/moveto_start", Empty)

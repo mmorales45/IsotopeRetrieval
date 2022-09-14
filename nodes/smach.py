@@ -4,7 +4,7 @@ import rospy
 import smach
 
 # define navigating state
-class Foo(smach.State):
+class Navigate(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['outcome1','outcome2'])
         self.counter = 0
@@ -19,13 +19,14 @@ class Foo(smach.State):
 
 
 # define manipulation state
-class Bar(smach.State):
+class Manipulate(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['outcome2'])
 
     def execute(self, userdata):
         rospy.loginfo('Executing state BAR')
         return 'outcome2'
+
         
 
 
@@ -40,11 +41,11 @@ def main():
     # Open the container
     with sm:
         # Add states to the container
-        smach.StateMachine.add('FOO', Foo(), 
-                               transitions={'outcome1':'BAR', 
-                                            'outcome2':'outcome4'})
-        smach.StateMachine.add('BAR', Bar(), 
-                               transitions={'outcome2':'FOO'})
+        smach.StateMachine.add('Navigate', Navigate(), 
+                               transitions={'outcome1':'Manipulate'})
+
+        smach.StateMachine.add('Manipulate', Manipulate(), 
+                               transitions={'outcome2':'outcome4'})
 
     # Execute SMACH plan
     outcome = sm.execute()
