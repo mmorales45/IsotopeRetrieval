@@ -57,6 +57,8 @@
   <build_export_depend>geometry_msgs</build_export_depend>
 
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>smach</exec_depend>
+  <exec_depend>smach_ros</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>robotiq_2f_gripper_control</exec_depend>
@@ -75,11 +77,15 @@
   <exec_depend>xacro</exec_depend>
 
   <build_depend>roscpp</build_depend>
+  <build_depend>smach</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>robotiq_2f_gripper_control</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>message_runtime</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>smach</build_depend>
+  <build_depend>smach_ros</build_depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

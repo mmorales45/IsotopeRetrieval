@@ -20,6 +20,8 @@ find_package(catkin REQUIRED COMPONENTS
   robotiq_2f_gripper_control
   roscpp
   rospy
+  smach
+  smach_ros
   )
 
 ## System dependencies are found with CMake's conventions
@@ -196,6 +198,7 @@ catkin_install_python(PROGRAMS
   nodes/moving_demo
   GUI/hardwareSrcNode
   GUI/GUI.py
+  nodes/manipulation_node
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

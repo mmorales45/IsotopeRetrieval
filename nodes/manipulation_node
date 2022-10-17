@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+import enum
+import sys
+
+import rospy
+import actionlib
+from std_srvs.srv import Empty, EmptyResponse
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from trajectory_msgs.msg import JointTrajectoryPoint
+from controller_manager_msgs.srv import SwitchControllerRequest, SwitchController
+from controller_manager_msgs.srv import LoadControllerRequest, LoadController
+import geometry_msgs.msg as geometry_msgs
+from argonne_final_project.msg import SetPosition
+
+import time
+import signal
+from argonne_final_project.robotiq_Control_lib import RobotiqControl
+from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output  as outputMsg 
+import moveit_commander
+import tf2_ros
+from sensor_msgs.msg import JointState
+import copy
+
+
+
+
+class MockUp:
+    """Node to test basic functions of UR robot"""
+    def __init__(self): 
+        self.ur5e_home_pose = rospy.get_param("/ur5e_home_pose")
+        print(self.ur5e_home_pose)
+        
+
+def main(): #The main function.
+    rospy.init_node("new_demo_node")
+    try:
+        move_arm = MockUp()
+        rospy.spin()
+
+    except rospy.ROSInterruptException:
+        return
+    except KeyboardInterrupt:
+        return
+
+
+if __name__ == "__main__":
+    main()
