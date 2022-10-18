@@ -1,9 +1,9 @@
 <launch>
     <!-- Launch RVIZ config -->
-    <!-- <node name="rviz" pkg = "rviz" type="rviz"/> -->
+    <node name="rviz" pkg = "rviz" type="rviz" args=" -d $(find argonne_final_project)/config/mockUP.rviz" />
 
     <!-- Launch move_group aka MOVEIT -->
-    <!-- <include file="$(find dual_arm_moveit_config)/launch/move_group.launch" pass_all_args="true"/> -->
+    <include file="$(find dual_arm_moveit_config)/launch/move_group.launch" pass_all_args="true"/>
 
     <!-- Laucnh the node and param -->
     <rosparam file="$(find argonne_final_project)/config/saved_pos.yaml" />
@@ -11,5 +11,5 @@
     <node name="manipulation_node" pkg="argonne_final_project" type="manipulation_node" output="screen"/>
 
     <!-- Launch IntelCam and AprilTags-->
-    <!-- <include file="$(find argonne_final_project)/launch/intel_cam.launch" pass_all_args="true"/> -->
+    <include file="$(find argonne_final_project)/launch/intel_cam.launch" pass_all_args="true"/>
 </launch>

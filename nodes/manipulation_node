@@ -27,12 +27,164 @@ import copy
 class MockUp:
     """Node to test basic functions of UR robot"""
     def __init__(self): 
+        self.get_params()
+        self.tfBuffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tfBuffer)
+
+        moveit_commander.roscpp_initialize(sys.argv)
+        self.robot = moveit_commander.RobotCommander()
+        group_name_5 = "ur5e"
+        self.move_group = moveit_commander.MoveGroupCommander(group_name_5)
+        group_name_16 = "ur16e"
+        self.move_group_16 = moveit_commander.MoveGroupCommander(group_name_16)
+        
+        self.move_arm = rospy.Service("marco/demo_move", Empty , self.demo_move)
+        # print(self.move_group.get_current_pose().pose)
+        self.setup_grippers()
+
+        self.home_poses()
+        self.trans = []
+        self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
+    
+    def main_loop(self,timer):
+        
+        
+        try:
+            self.trans = self.tfBuffer.lookup_transform("base_link","Tag1",rospy.Time(0)) 
+        except:
+            pass
+
+
+    def get_params(self):
         self.ur5e_home_pose = rospy.get_param("/ur5e_home_pose")
-        print(self.ur5e_home_pose)
+        self.ur16e_home_pose = rospy.get_param("/ur16e_home_pose")
+        self.ur5e_vert_ee_j = rospy.get_param("/ur5e_vert_ee_j")
+        self.ur5e_hori_ee_j = rospy.get_param("/ur5e_hori_ee_j")
+        self.ur5e_goal_pose = rospy.get_param("/ur5e_goal_pose")
+        self.ur5e_vert_ee_pose = rospy.get_param("/ur5e_vert_ee_pose")
+        self.ur5e_hori_ee_pose = rospy.get_param("/ur5e_hori_ee_pose")
+
+    def home_poses(self):
+        
+        self.move_group.go(self.ur5e_home_pose, wait=True)
+        self.move_group.stop()
+
+        # self.ur5e_home_pose[5] = self.ur5e_vert_ee_j
+        # self.move_group.go(self.ur5e_home_pose, wait=True)
+        # self.move_group.stop()
+        # print(self.move_group.get_current_pose().pose)
+
+        # self.ur5e_home_pose[5] = self.ur5e_hori_ee_j
+        # self.move_group.go(self.ur5e_home_pose, wait=True)
+        # self.move_group.stop()
+        # print(self.move_group.get_current_pose().pose)
         
 
+
+    def setup_grippers(self):
+        self.open_ur5e_srv = rospy.Service("marco/open_ur5e", Empty , self.open_ur5e) 
+        self.close_ur5e_srv = rospy.Service("marco/close_ur5e", Empty , self.close_ur5e) 
+        # self.close_ur16e_srv = rospy.Service("marco/close_ur16e", Empty , self.close_ur16e) 
+        # self.open_ur16e_srv = rospy.Service("marco/open_ur16e", Empty , self.open_ur16e)
+
+        self.ur5e_gripper_pub = rospy.Publisher('ur5e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
+        # self.ur16e_gripper_pub = rospy.Publisher('ur16e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
+
+        rospy.sleep(2.0)
+        self.ur5e_gripper = RobotiqControl()
+        # self.ur16e_gripper = RobotiqControl()
+        command_5 = self.ur5e_gripper.reset()
+        # command_16 = self.ur16e_gripper.reset()
+        self.ur5e_gripper_pub.publish(command_5)
+        # self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
+        command_5 = self.ur5e_gripper.activate()
+        # command_16 = self.ur16e_gripper.activate()
+        self.ur5e_gripper_pub.publish(command_5)
+        # self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
+    
+    def close_ur5e(self,req):
+
+        command = self.ur5e_gripper.close()
+        self.ur5e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+        return EmptyResponse()
+
+    def open_ur5e(self,req):
+
+        command = self.ur5e_gripper.open()
+        self.ur5e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+
+        return EmptyResponse()
+
+    def demo_move(self,req):
+        
+        self.move_group.go(self.ur5e_home_pose, wait=True)
+        self.move_group.stop()
+
+        print("just before picking it up")
+        pick_pose = [0,0,0,0,0,0,0]
+        pick_pose[0] = self.trans.transform.translation.x - 0.0
+        pick_pose[1] = self.trans.transform.translation.y + 0.02
+        pick_pose[2] = self.trans.transform.translation.z - 0.065
+        pick_pose[3] = self.ur5e_hori_ee_pose[0]
+        pick_pose[4] = self.ur5e_hori_ee_pose[1]
+        pick_pose[5] = self.ur5e_hori_ee_pose[2]
+        pick_pose[6] = self.ur5e_hori_ee_pose[3]
+
+        self.move_group.set_pose_target(pick_pose)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        print("picking up")
+        pick_pose[0] = self.trans.transform.translation.x +  0.1
+        pick_pose[1] = self.trans.transform.translation.y + 0.02
+        pick_pose[2] = self.trans.transform.translation.z - 0.065
+        
+        self.move_group.set_pose_target(pick_pose)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+        self.close_ur5e(0)
+
+        print("moving up")
+        pick_pose[0] = self.trans.transform.translation.x +  0.0
+        pick_pose[1] = self.trans.transform.translation.y + 0.02
+        pick_pose[2] = self.trans.transform.translation.z + 0.03
+        
+        self.move_group.set_pose_target(pick_pose)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        print("Rotating")
+        pick_pose[3] = self.ur5e_vert_ee_pose[0]
+        pick_pose[4] = self.ur5e_vert_ee_pose[1]
+        pick_pose[5] = self.ur5e_vert_ee_pose[2]
+        pick_pose[6] = self.ur5e_vert_ee_pose[3]
+
+        self.move_group.set_pose_target(pick_pose)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        self.ur5e_goal_pose[1] = self.ur5e_goal_pose[1] - 0.02
+        self.move_group.set_pose_target(self.ur5e_goal_pose)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        self.ur5e_goal_pose[1] = self.ur5e_goal_pose[1] + 0.02
+        self.move_group.set_pose_target(self.ur5e_goal_pose)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+        
 def main(): #The main function.
-    rospy.init_node("new_demo_node")
+    rospy.init_node("MockUpNode")
     try:
         move_arm = MockUp()
         rospy.spin()
