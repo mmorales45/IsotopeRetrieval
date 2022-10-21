@@ -39,10 +39,14 @@ class MockUp:
         self.move_group_16 = moveit_commander.MoveGroupCommander(group_name_16)
         
         self.move_arm = rospy.Service("marco/demo_move", Empty , self.demo_move)
-        # print(self.move_group.get_current_pose().pose)
-        self.setup_grippers()
+        self.move_cart_way = rospy.Service("marco/cart_movement", Empty , self.cart_movement)
+        print(self.move_group_16.get_current_joint_values())
+        print(self.move_group_16.get_current_pose().pose)
 
-        self.home_poses()
+        # self.setup_grippers()
+        # self.cart_movement()
+        # print("finished!")
+        self.home_poses()   
         self.trans = []
         self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
     
@@ -51,9 +55,61 @@ class MockUp:
         
         try:
             self.trans = self.tfBuffer.lookup_transform("base_link","Tag1",rospy.Time(0)) 
+            he = self.tfBuffer.lookup_transform("ur5e_wrist_3_link","Tag1",rospy.Time(0))
+            print(he)
         except:
             pass
+    # def tool_exchanger(self):
 
+        
+    def cart_movement(self,req):
+
+        self.move_group_16.go(self.goal_tool_js, wait=True)
+        self.move_group.stop()
+        ###########################          Move Down         #############################
+        scale = 1
+        waypoints = []
+
+        wpose = self.move_group_16.get_current_pose().pose
+        wpose.position.z -= 0.05  #The offset from the save'd joint positions above the TE
+        # wpose.position.y += scale * 0.2  # and sideways (y)
+        waypoints.append(copy.deepcopy(wpose))
+
+        # We want the Cartesian path to be interpolated at a resolution of 1 cm
+        # which is why we will specify 0.01 as the eef_step in Cartesian
+        # translation.  We will disable the jump threshold by setting it to 0.0,
+        # ignoring the check for infeasible jumps in joint space, which is sufficient
+        # for this tutorial.
+        (plan, fraction) = self.move_group_16.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group_16.execute(plan,wait=True)
+
+        ###########################         Move Away from system           #############################
+        waypoints = []
+
+        wpose = self.move_group_16.get_current_pose().pose
+        wpose.position.y += 0.05  #Move to release the tool
+        # wpose.position.y += scale * 0.2  # and sideways (y)
+        waypoints.append(copy.deepcopy(wpose))
+
+        # We want the Cartesian path to be interpolated at a resolution of 1 cm
+        # which is why we will specify 0.01 as the eef_step in Cartesian
+        # translation.  We will disable the jump threshold by setting it to 0.0,
+        # ignoring the check for infeasible jumps in joint space, which is sufficient
+        # for this tutorial.
+        (plan, fraction) = self.move_group_16.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group_16.execute(plan,wait=True)
 
     def get_params(self):
         self.ur5e_home_pose = rospy.get_param("/ur5e_home_pose")
@@ -63,11 +119,20 @@ class MockUp:
         self.ur5e_goal_pose = rospy.get_param("/ur5e_goal_pose")
         self.ur5e_vert_ee_pose = rospy.get_param("/ur5e_vert_ee_pose")
         self.ur5e_hori_ee_pose = rospy.get_param("/ur5e_hori_ee_pose")
+        self.goal_tool_js = rospy.get_param("/goal_tool_js")
+        self.goal_tool_pose = rospy.get_param("/goal_tool_pose")
+
 
     def home_poses(self):
-        
-        self.move_group.go(self.ur5e_home_pose, wait=True)
+        print("starting movement")
+        self.move_group_16.go(self.goal_tool_js, wait=True)
         self.move_group.stop()
+
+        # self.move_group.go(self.ur5e_home_pose, wait=True)
+        # self.move_group.stop()
+
+        # self.move_group_16.go(self.ur16e_home_pose, wait=True)
+        # self.move_group_16.stop()
 
         # self.ur5e_home_pose[5] = self.ur5e_vert_ee_j
         # self.move_group.go(self.ur5e_home_pose, wait=True)
