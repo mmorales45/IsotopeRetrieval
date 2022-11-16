@@ -96,6 +96,6 @@
     <rosparam param="source_list">['/ur5e/joint_states','/ur16e/joint_states']</rosparam>
   </node>
 
-  <!-- <include file="$(find argonne_final_project)/launch/gripper_control.launch"/> -->
+  <include file="$(find argonne_final_project)/launch/gripper_control.launch"/>
 
 </launch>

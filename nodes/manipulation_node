@@ -40,15 +40,15 @@ class MockUp:
         
         self.move_arm = rospy.Service("marco/demo_move", Empty , self.demo_move)
         self.move_cart_way = rospy.Service("marco/cart_movement", Empty , self.cart_movement)
-        print(self.move_group_16.get_current_joint_values())
-        print(self.move_group_16.get_current_pose().pose)
+        # print(self.move_group_16.get_current_joint_values())
+        # print(self.move_group_16.get_current_pose().pose)
 
-        # self.setup_grippers()
+        self.setup_grippers()
         # self.cart_movement()
         # print("finished!")
-        self.home_poses()   
-        self.trans = []
-        self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
+        # self.home_poses()   
+        # self.trans = []
+        # self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
     
     def main_loop(self,timer):
         
@@ -63,15 +63,15 @@ class MockUp:
 
         
     def cart_movement(self,req):
-
-        self.move_group_16.go(self.goal_tool_js, wait=True)
-        self.move_group.stop()
+        rospy.sleep(3.)
+        # self.move_group_16.go(self.goal_tool_js, wait=True)
+        # self.move_group.stop()
         ###########################          Move Down         #############################
         scale = 1
         waypoints = []
 
         wpose = self.move_group_16.get_current_pose().pose
-        wpose.position.z -= 0.05  #The offset from the save'd joint positions above the TE
+        wpose.position.y -= 0.05  #The offset from the save'd joint positions above the TE
         # wpose.position.y += scale * 0.2  # and sideways (y)
         waypoints.append(copy.deepcopy(wpose))
 
@@ -93,7 +93,7 @@ class MockUp:
         waypoints = []
 
         wpose = self.move_group_16.get_current_pose().pose
-        wpose.position.y += 0.05  #Move to release the tool
+        wpose.position.z += 0.05  #Move to release the tool
         # wpose.position.y += scale * 0.2  # and sideways (y)
         waypoints.append(copy.deepcopy(wpose))
 
@@ -149,24 +149,24 @@ class MockUp:
     def setup_grippers(self):
         self.open_ur5e_srv = rospy.Service("marco/open_ur5e", Empty , self.open_ur5e) 
         self.close_ur5e_srv = rospy.Service("marco/close_ur5e", Empty , self.close_ur5e) 
-        # self.close_ur16e_srv = rospy.Service("marco/close_ur16e", Empty , self.close_ur16e) 
-        # self.open_ur16e_srv = rospy.Service("marco/open_ur16e", Empty , self.open_ur16e)
+        self.close_ur16e_srv = rospy.Service("marco/close_ur16e", Empty , self.close_ur16e) 
+        self.open_ur16e_srv = rospy.Service("marco/open_ur16e", Empty , self.open_ur16e)
 
         self.ur5e_gripper_pub = rospy.Publisher('ur5e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
-        # self.ur16e_gripper_pub = rospy.Publisher('ur16e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
+        self.ur16e_gripper_pub = rospy.Publisher('ur16e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
 
         rospy.sleep(2.0)
         self.ur5e_gripper = RobotiqControl()
-        # self.ur16e_gripper = RobotiqControl()
+        self.ur16e_gripper = RobotiqControl()
         command_5 = self.ur5e_gripper.reset()
-        # command_16 = self.ur16e_gripper.reset()
+        command_16 = self.ur16e_gripper.reset()
         self.ur5e_gripper_pub.publish(command_5)
-        # self.ur16e_gripper_pub.publish(command_16)
+        self.ur16e_gripper_pub.publish(command_16)
         rospy.sleep(1.5)
         command_5 = self.ur5e_gripper.activate()
-        # command_16 = self.ur16e_gripper.activate()
+        command_16 = self.ur16e_gripper.activate()
         self.ur5e_gripper_pub.publish(command_5)
-        # self.ur16e_gripper_pub.publish(command_16)
+        self.ur16e_gripper_pub.publish(command_16)
         rospy.sleep(1.5)
     
     def close_ur5e(self,req):
@@ -180,6 +180,21 @@ class MockUp:
 
         command = self.ur5e_gripper.open()
         self.ur5e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+
+        return EmptyResponse()
+
+    def close_ur16e(self,req):
+
+        command = self.ur16e_gripper.close()
+        self.ur16e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+        return EmptyResponse()
+
+    def open_ur16e(self,req):
+
+        command = self.ur16e_gripper.open()
+        self.ur16e_gripper_pub.publish(command)
         rospy.sleep(1.0)
 
         return EmptyResponse()
