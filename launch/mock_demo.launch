@@ -11,5 +11,5 @@
     <node name="manipulation_node" pkg="argonne_final_project" type="manipulation_node" output="screen"/>
 
     <!-- Launch IntelCam and AprilTags-->
-    <!-- <include file="$(find argonne_final_project)/launch/intel_cam.launch" pass_all_args="true"/> -->
+    <include file="$(find argonne_final_project)/launch/intel_cam.launch" pass_all_args="true"/>
 </launch>
