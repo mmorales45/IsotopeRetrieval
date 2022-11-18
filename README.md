@@ -5,24 +5,22 @@ By Marco Morales
 
 ![Robot_second](pictures/ArgonnePic2.png) -->
 
-## Dependencies
+## Prerequisites
 
-Robotiq For Noetic 
+To download the packages, please install vcstool using the following link
+
+[vcstool github link](https://github.com/dirk-thomas/vcstool)
+
+Once completed, import the .repos file using the following command line in the src folder of your workspace.
+
 ```
-git clone -b noetic-devel git@github.com:jr-robotics/robotiq.git
+vcs import < DualArmMIR.repos
 ```
 
-Run the following when in the src folder of your workspace.
+Next install any dependencies the packages have using the commands below.
 
 ```
-git clone https://github.com/mmorales45/Universal_Robots_ROS_Driver.git
-git clone https://github.com/mmorales45/robotiq.git
-git clone https://github.com/mmorales45/argonne_final_project.git
-git clone https://github.com/mmorales45/sdl_robot_description.git
-git clone https://github.com/mmorales45/dual_arm_moveit_config.git
-git clone https://github.com/AprilRobotics/apriltag_ros.git
 sudo apt-get install ros-$ROS_DISTRO-moveit-visual-tools
-
 cd ..
 rosdep install --from-paths src --ignore-src -r -y
 catkin_make
