@@ -1,6 +1,6 @@
 # Argonne Dual Arm Mobile Base Retrieval System
 By Marco Morales
-
+<!-- Need to resize the pictures below -->
 <!-- ![Robot_first](pictures/ArgonnePic1.png)
 
 ![Robot_second](pictures/ArgonnePic2.png) -->
