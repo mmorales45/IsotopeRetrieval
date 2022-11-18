@@ -25,8 +25,16 @@ cd ..
 rosdep install --from-paths src --ignore-src -r -y
 catkin_make
 ```
+# TroubleShooting/Common Issues
 
-## For Single Arm Control
+## ROS Drivers Run But No Control
+
+For this issue, one of the known errors if you programmed the robot to run without a teach pendant but for some reason, one is installed. Make sure to go into settings, enter the password (most likely it will be "easybot"), and then change the settings to be correct for the current setup.
+
+## ROS Drivers Fail
+
+There are a number of reasons this could occur. Some of the common issues are the IP addresses for the arms do not align with those chosen. Try disabling any wifi connection on the laptop and instead make sure the only active connection is the ethernet connection to both robotic arms. 
+# For Single Arm Control
 
 ### UR5e
 ```
