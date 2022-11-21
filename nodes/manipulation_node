@@ -64,7 +64,43 @@ class MockUp:
             self.trans = self.tfBuffer.lookup_transform("base_link","Tag0",rospy.Time(0)) 
         except:
             pass
-    # def tool_exchanger(self):
+    # def tool_exchanger(self): 
+    
+    def manipulation_func(self, way_list,arm_move_group):
+        print("Starting waypoints")
+        for i in way_list:
+            if len(i) == 6:
+                arm_move_group.go(i, wait=True)
+                arm_move_group.stop()
+            elif len(i) == 7:
+                scale = 1
+                waypoints = []
+                wpose = arm_move_group.get_current_pose().pose
+                waypoints.append(copy.deepcopy(wpose))
+                (plan, fraction) = arm_move_group.compute_cartesian_path(
+                                                waypoints,   
+                                                0.01,        
+                                                0.0)         
+                plan = arm_move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+                print(fraction)
+                arm_move_group.execute(plan,wait=True)
+        print("Finished waypoints")
+
+    def cartesian_func(self,offsets,arm_move_group):
+        scale = 1
+        waypoints = []
+        wpose.position.x += offsets[0]  #The offset from the save'd joint positions above the TE
+        wpose.position.y += offsets[1]
+        wpose.position.z += offsets[2]
+        wpose = arm_move_group.get_current_pose().pose
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = arm_move_group.compute_cartesian_path(
+                                        waypoints,   
+                                        0.01,        
+                                        0.0)         
+        plan = arm_move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        arm_move_group.execute(plan,wait=True)   
 
     def new_move(self,req):
         rospy.sleep(5.)
