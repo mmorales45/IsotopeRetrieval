@@ -199,6 +199,7 @@ catkin_install_python(PROGRAMS
   GUI/hardwareSrcNode
   GUI/GUI.py
   nodes/manipulation_node
+  nodes/state_handler
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
