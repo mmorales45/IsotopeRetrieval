@@ -42,28 +42,27 @@ class MockUp:
         self.move_cart_way = rospy.Service("marco/cart_movement", Empty , self.cart_movement)
         self.joint_pos_srv = rospy.Service("marco/joint_pos", Empty , self.joint_pos)
         self.arm_pos_srv = rospy.Service("marco/arm_pos", Empty , self.arm_pos)
-        # print("Ur16e poses")
-        # print(self.move_group_16.get_current_joint_values())
-        # print(self.move_group_16.get_current_pose().pose)
-
-        print("Ur5e poses")
-        print(self.move_group.get_current_joint_values())
-        print(self.move_group.get_current_pose().pose)
         
+
+        self.move_group.go(self.UR5e_ready_jp, wait=True)
+        self.move_group.stop()
+
         self.setup_grippers()
         # self.cart_movement()
         # print("finished!")
         # self.home_poses()   
-        self.trans = []
+        self.tag2 = []
         self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
 
-        self.new_move(0)
+        # self.new_move(0)
+        self.cooling_detach()
     
     def main_loop(self,timer):
         
         
         try:
-            self.trans = self.tfBuffer.lookup_transform("base_link","Tag0",rospy.Time(0)) 
+            self.tag2 = self.tfBuffer.lookup_transform("base_link","Tag2",rospy.Time(0)) 
+            
         except:
             pass
     # def tool_exchanger(self): 
@@ -80,6 +79,77 @@ class MockUp:
         print("UR16e")
         print(self.move_group_16.get_current_pose().pose)
         return EmptyResponse()
+    
+    def cooling_detach(self):
+        rospy.sleep(2.0)
+        scale = 1
+        waypoints = []
+
+        wpose = self.move_group.get_current_pose().pose
+        # wpose.position.x = self.tag2.transform.translation.x
+        wpose.position.y = self.tag2.transform.translation.y
+        # wpose.position.z = self.tag2.transform.translation.z - .21
+        wpose.position.z = self.tag2.transform.translation.z
+        wpose.position.x -= .175
+
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = self.move_group.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group.execute(plan,wait=True)
+
+        self.close_ur5e(0)
+
+        waypoints = []
+        wpose = self.move_group.get_current_pose().pose
+        wpose.position.x += 0.10
+        wpose.position.z += 0.05
+
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = self.move_group.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group.execute(plan,wait=True)
+
+        self.move_group.go(self.UR5e_ready_jp, wait=True)
+        self.move_group.stop()
+
+        waypoints = []
+        wpose = self.move_group.get_current_pose().pose
+        wpose.position.y = self.tag2.transform.translation.y
+        wpose.position.z = self.tag2.transform.translation.z - .21
+
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = self.move_group.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group.execute(plan,wait=True)
+
+        self.open_ur5e(0)
+
+        self.move_group.go(self.UR5e_ready_jp, wait=True)
+        self.move_group.stop()
+        
+
+    def cooling_place(self):
+        pass
+    def isotope_grab(self):
+        pass
+    def isotope_detach(self):
+        pass
+
 
     def manipulation_func(self, way_list,arm_move_group):
         print("Starting waypoints")
@@ -100,6 +170,99 @@ class MockUp:
                 print(fraction)
                 arm_move_group.execute(plan,wait=True)
         print("Finished waypoints")
+
+    def get_params(self):
+        self.ur5e_home_pose = rospy.get_param("/ur5e_home_pose")
+        self.ur16e_home_pose = rospy.get_param("/ur16e_home_pose")
+        self.ur5e_vert_ee_j = rospy.get_param("/ur5e_vert_ee_j")
+        self.ur5e_hori_ee_j = rospy.get_param("/ur5e_hori_ee_j")
+        self.ur5e_goal_pose = rospy.get_param("/ur5e_goal_pose")
+        self.ur5e_vert_ee_pose = rospy.get_param("/ur5e_vert_ee_pose")
+        self.ur5e_hori_ee_pose = rospy.get_param("/ur5e_hori_ee_pose")
+        self.goal_tool_js = rospy.get_param("/goal_tool_js")
+        self.goal_tool_pose = rospy.get_param("/goal_tool_pose")
+
+        self.ur5e_dual_home_js = rospy.get_param("/ur5e_dual_home_js")
+        self.ur5e_tool_above_js = rospy.get_param("/ur5e_tool_above_js")
+        self.ur5e_tool_above_pose = rospy.get_param("/ur5e_tool_above_pose")
+        self.ur5e_tool_goal_js = rospy.get_param("/ur5e_tool_goal_js")
+
+        self.UR5e_ready_jp = rospy.get_param("/UR5e_ready_jp")
+
+    def home_poses(self):
+        print("starting movement")
+        self.move_group_16.go(self.goal_tool_js, wait=True)
+        self.move_group.stop()
+
+        # self.move_group.go(self.ur5e_home_pose, wait=True)
+        # self.move_group.stop()
+
+        # self.move_group_16.go(self.ur16e_home_pose, wait=True)
+        # self.move_group_16.stop()
+
+        # self.ur5e_home_pose[5] = self.ur5e_vert_ee_j
+        # self.move_group.go(self.ur5e_home_pose, wait=True)
+        # self.move_group.stop()
+        # print(self.move_group.get_current_pose().pose)
+
+        # self.ur5e_home_pose[5] = self.ur5e_hori_ee_j
+        # self.move_group.go(self.ur5e_home_pose, wait=True)
+        # self.move_group.stop()
+        # print(self.move_group.get_current_pose().pose)
+        
+
+
+    def setup_grippers(self):
+        self.open_ur5e_srv = rospy.Service("marco/open_ur5e", Empty , self.open_ur5e) 
+        self.close_ur5e_srv = rospy.Service("marco/close_ur5e", Empty , self.close_ur5e) 
+        self.close_ur16e_srv = rospy.Service("marco/close_ur16e", Empty , self.close_ur16e) 
+        self.open_ur16e_srv = rospy.Service("marco/open_ur16e", Empty , self.open_ur16e)
+
+        self.ur5e_gripper_pub = rospy.Publisher('ur5e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
+        self.ur16e_gripper_pub = rospy.Publisher('ur16e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
+
+        rospy.sleep(2.0)
+        self.ur5e_gripper = RobotiqControl()
+        self.ur16e_gripper = RobotiqControl()
+        command_5 = self.ur5e_gripper.reset()
+        command_16 = self.ur16e_gripper.reset()
+        self.ur5e_gripper_pub.publish(command_5)
+        self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
+        command_5 = self.ur5e_gripper.activate()
+        command_16 = self.ur16e_gripper.activate()
+        self.ur5e_gripper_pub.publish(command_5)
+        self.ur16e_gripper_pub.publish(command_16)
+        rospy.sleep(1.5)
+    
+    def close_ur5e(self,req):
+
+        command = self.ur5e_gripper.close()
+        self.ur5e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+        return EmptyResponse()
+
+    def open_ur5e(self,req):
+
+        command = self.ur5e_gripper.open()
+        self.ur5e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+
+        return EmptyResponse()
+
+    def close_ur16e(self,req):
+        command = self.ur16e_gripper.close()
+        self.ur16e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+        return EmptyResponse()
+
+    def open_ur16e(self,req):
+
+        command = self.ur16e_gripper.open()
+        self.ur16e_gripper_pub.publish(command)
+        rospy.sleep(1.0)
+
+        return EmptyResponse()
 
     def cartesian_func(self,offsets,arm_move_group):
         scale = 1
@@ -305,97 +468,7 @@ class MockUp:
         print(fraction)
         self.move_group_16.execute(plan,wait=True)
 
-    def get_params(self):
-        self.ur5e_home_pose = rospy.get_param("/ur5e_home_pose")
-        self.ur16e_home_pose = rospy.get_param("/ur16e_home_pose")
-        self.ur5e_vert_ee_j = rospy.get_param("/ur5e_vert_ee_j")
-        self.ur5e_hori_ee_j = rospy.get_param("/ur5e_hori_ee_j")
-        self.ur5e_goal_pose = rospy.get_param("/ur5e_goal_pose")
-        self.ur5e_vert_ee_pose = rospy.get_param("/ur5e_vert_ee_pose")
-        self.ur5e_hori_ee_pose = rospy.get_param("/ur5e_hori_ee_pose")
-        self.goal_tool_js = rospy.get_param("/goal_tool_js")
-        self.goal_tool_pose = rospy.get_param("/goal_tool_pose")
-
-        self.ur5e_dual_home_js = rospy.get_param("/ur5e_dual_home_js")
-        self.ur5e_tool_above_js = rospy.get_param("/ur5e_tool_above_js")
-        self.ur5e_tool_above_pose = rospy.get_param("/ur5e_tool_above_pose")
-        self.ur5e_tool_goal_js = rospy.get_param("/ur5e_tool_goal_js")
-
-    def home_poses(self):
-        print("starting movement")
-        self.move_group_16.go(self.goal_tool_js, wait=True)
-        self.move_group.stop()
-
-        # self.move_group.go(self.ur5e_home_pose, wait=True)
-        # self.move_group.stop()
-
-        # self.move_group_16.go(self.ur16e_home_pose, wait=True)
-        # self.move_group_16.stop()
-
-        # self.ur5e_home_pose[5] = self.ur5e_vert_ee_j
-        # self.move_group.go(self.ur5e_home_pose, wait=True)
-        # self.move_group.stop()
-        # print(self.move_group.get_current_pose().pose)
-
-        # self.ur5e_home_pose[5] = self.ur5e_hori_ee_j
-        # self.move_group.go(self.ur5e_home_pose, wait=True)
-        # self.move_group.stop()
-        # print(self.move_group.get_current_pose().pose)
-        
-
-
-    def setup_grippers(self):
-        self.open_ur5e_srv = rospy.Service("marco/open_ur5e", Empty , self.open_ur5e) 
-        self.close_ur5e_srv = rospy.Service("marco/close_ur5e", Empty , self.close_ur5e) 
-        # self.close_ur16e_srv = rospy.Service("marco/close_ur16e", Empty , self.close_ur16e) 
-        # self.open_ur16e_srv = rospy.Service("marco/open_ur16e", Empty , self.open_ur16e)
-
-        self.ur5e_gripper_pub = rospy.Publisher('ur5e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
-        # self.ur16e_gripper_pub = rospy.Publisher('ur16e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
-
-        rospy.sleep(2.0)
-        self.ur5e_gripper = RobotiqControl()
-        # self.ur16e_gripper = RobotiqControl()
-        command_5 = self.ur5e_gripper.reset()
-        # command_16 = self.ur16e_gripper.reset()
-        self.ur5e_gripper_pub.publish(command_5)
-        # self.ur16e_gripper_pub.publish(command_16)
-        rospy.sleep(1.5)
-        command_5 = self.ur5e_gripper.activate()
-        # command_16 = self.ur16e_gripper.activate()
-        self.ur5e_gripper_pub.publish(command_5)
-        # self.ur16e_gripper_pub.publish(command_16)
-        rospy.sleep(1.5)
     
-    def close_ur5e(self,req):
-
-        command = self.ur5e_gripper.close()
-        self.ur5e_gripper_pub.publish(command)
-        rospy.sleep(1.0)
-        return EmptyResponse()
-
-    def open_ur5e(self,req):
-
-        command = self.ur5e_gripper.open()
-        self.ur5e_gripper_pub.publish(command)
-        rospy.sleep(1.0)
-
-        return EmptyResponse()
-
-    def close_ur16e(self,req):
-        rospy.sleep(4.0)
-        command = self.ur16e_gripper.close()
-        self.ur16e_gripper_pub.publish(command)
-        rospy.sleep(1.0)
-        return EmptyResponse()
-
-    def open_ur16e(self,req):
-
-        command = self.ur16e_gripper.open()
-        self.ur16e_gripper_pub.publish(command)
-        rospy.sleep(1.0)
-
-        return EmptyResponse()
 
     def demo_move(self,req):
         
