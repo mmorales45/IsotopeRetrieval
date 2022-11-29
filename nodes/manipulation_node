@@ -40,6 +40,8 @@ class MockUp:
         
         self.move_arm = rospy.Service("marco/demo_move", Empty , self.demo_move)
         self.move_cart_way = rospy.Service("marco/cart_movement", Empty , self.cart_movement)
+        self.joint_pos_srv = rospy.Service("marco/joint_pos", Empty , self.joint_pos)
+        self.arm_pos_srv = rospy.Service("marco/arm_pos", Empty , self.arm_pos)
         # print("Ur16e poses")
         # print(self.move_group_16.get_current_joint_values())
         # print(self.move_group_16.get_current_pose().pose)
@@ -65,7 +67,20 @@ class MockUp:
         except:
             pass
     # def tool_exchanger(self): 
-    
+    def joint_pos(self,req):
+        print("UR5e")
+        print(self.move_group.get_current_joint_values())
+        print("UR16e")
+        print(self.move_group_16.get_current_joint_values())
+        return EmptyResponse()
+
+    def arm_pos(self,req):
+        print("UR5e")
+        print(self.move_group.get_current_pose().pose)
+        print("UR16e")
+        print(self.move_group_16.get_current_pose().pose)
+        return EmptyResponse()
+
     def manipulation_func(self, way_list,arm_move_group):
         print("Starting waypoints")
         for i in way_list:
