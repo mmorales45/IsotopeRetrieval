@@ -38,31 +38,41 @@ class MockUp:
         group_name_16 = "ur16e"
         self.move_group_16 = moveit_commander.MoveGroupCommander(group_name_16)
         
-        self.move_arm = rospy.Service("marco/demo_move", Empty , self.demo_move)
-        self.move_cart_way = rospy.Service("marco/cart_movement", Empty , self.cart_movement)
         self.joint_pos_srv = rospy.Service("marco/joint_pos", Empty , self.joint_pos)
         self.arm_pos_srv = rospy.Service("marco/arm_pos", Empty , self.arm_pos)
         
-
-        self.move_group.go(self.UR5e_ready_jp, wait=True)
-        self.move_group.stop()
-
+        # self.home_poses() 
         self.setup_grippers()
         # self.cart_movement()
         # print("finished!")
         # self.home_poses()   
+        self.tag0 = []
         self.tag2 = []
+        self.tag4 = []
         self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
 
-        # self.new_move(0)
-        self.cooling_detach()
+        # # # self.new_move(0)
+        # self.isotope_detach()
+        self.flag = 0
+        self.ctimer = 0
     
     def main_loop(self,timer):
-        
-        
+        if self.tag2 and self.flag == 0:
+            self.cooling_detach()
+            self.flag =1 
+        elif self.tag0 and self.tag2 and self.tag4 and self.flag == 1:
+            self.isotope_grab()
+            self.flag = 2
+        elif self.tag0 and self.flag ==2 and self.ctimer == 50:
+            self.isotope_detach()
+            self.flag = 3
+        else:
+            self.ctimer += 1
+        print(self.ctimer)
         try:
-            self.tag2 = self.tfBuffer.lookup_transform("base_link","Tag2",rospy.Time(0)) 
-            
+            self.tag0 = self.tfBuffer.lookup_transform("base_link","Tag0",rospy.Time(0)) 
+            self.tag2 = self.tfBuffer.lookup_transform("base_link","Tag2",rospy.Time(0))
+            self.tag4 = self.tfBuffer.lookup_transform("base_link","Tag4",rospy.Time(0))
         except:
             pass
     # def tool_exchanger(self): 
@@ -146,9 +156,125 @@ class MockUp:
     def cooling_place(self):
         pass
     def isotope_grab(self):
-        pass
+        ######## Go to Ur16e home#################
+        self.move_group_16.go(self.UR16e_ready_jp, wait=True)
+        self.move_group_16.stop()
+        ######### Go to object's y and z####################
+        scale = 1
+        waypoints = []
+
+        wpose = self.move_group_16.get_current_pose().pose
+        wpose.position.y = self.tag4.transform.translation.y + 0.01
+        wpose.position.z = self.tag4.transform.translation.z - 0.025
+        
+
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = self.move_group_16.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group_16.execute(plan,wait=True)
+        ######### Go to object's x####################
+        scale = 1
+        waypoints = []
+
+        wpose = self.move_group_16.get_current_pose().pose
+        wpose.position.x = self.tag4.transform.translation.x - 0.20
+
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = self.move_group_16.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group_16.execute(plan,wait=True)
+
+        ######### Grab Objetcs ####################
+        self.close_ur16e(0)
+        ######### Move Up ####################
+        scale = 1
+        waypoints = []
+
+        wpose = self.move_group_16.get_current_pose().pose
+        wpose.position.z += 0.05
+
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = self.move_group_16.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group_16.execute(plan,wait=True)
+        ######### Move Closer####################
+
     def isotope_detach(self):
-        pass
+        #########Move to Ur5e home ###########
+        self.move_group.go(self.UR5e_ready_jp, wait=True)
+        self.move_group.stop()
+
+        ######### Move to object y and z ##############
+        scale = 1
+        waypoints = []
+
+        wpose = self.move_group.get_current_pose().pose
+        wpose.position.y = self.tag0.transform.translation.y + 0.015
+        wpose.position.z = self.tag0.transform.translation.z - 0.025
+        # wpose.position.x -= .175
+
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = self.move_group.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group.execute(plan,wait=True)
+        ######### Move to object's x  ##############
+        scale = 1
+        waypoints = []
+
+        wpose = self.move_group.get_current_pose().pose
+        wpose.position.x = self.tag0.transform.translation.x + 0.13
+
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = self.move_group.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group.execute(plan,wait=True)
+        ######## Grab Object ##################
+        self.close_ur5e(0)
+        ############### Detach ################
+        scale = 1
+        waypoints = []
+
+        wpose = self.move_group.get_current_pose().pose
+        wpose.position.x += 0.2
+
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = self.move_group.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        self.move_group.execute(plan,wait=True)
+
+
+
+
 
 
     def manipulation_func(self, way_list,arm_move_group):
@@ -188,28 +314,16 @@ class MockUp:
         self.ur5e_tool_goal_js = rospy.get_param("/ur5e_tool_goal_js")
 
         self.UR5e_ready_jp = rospy.get_param("/UR5e_ready_jp")
+        self.UR16e_ready_jp = rospy.get_param("/UR16e_ready_jp")
 
     def home_poses(self):
-        print("starting movement")
-        self.move_group_16.go(self.goal_tool_js, wait=True)
+        print("Going to home poses")
+        
+        self.move_group.go(self.UR5e_ready_jp, wait=True)
         self.move_group.stop()
 
-        # self.move_group.go(self.ur5e_home_pose, wait=True)
-        # self.move_group.stop()
-
-        # self.move_group_16.go(self.ur16e_home_pose, wait=True)
-        # self.move_group_16.stop()
-
-        # self.ur5e_home_pose[5] = self.ur5e_vert_ee_j
-        # self.move_group.go(self.ur5e_home_pose, wait=True)
-        # self.move_group.stop()
-        # print(self.move_group.get_current_pose().pose)
-
-        # self.ur5e_home_pose[5] = self.ur5e_hori_ee_j
-        # self.move_group.go(self.ur5e_home_pose, wait=True)
-        # self.move_group.stop()
-        # print(self.move_group.get_current_pose().pose)
-        
+        self.move_group_16.go(self.UR16e_ready_jp, wait=True)
+        self.move_group_16.stop()
 
 
     def setup_grippers(self):
@@ -257,7 +371,6 @@ class MockUp:
         return EmptyResponse()
 
     def open_ur16e(self,req):
-
         command = self.ur16e_gripper.open()
         self.ur16e_gripper_pub.publish(command)
         rospy.sleep(1.0)
@@ -280,260 +393,7 @@ class MockUp:
         print(fraction)
         arm_move_group.execute(plan,wait=True)   
 
-    def new_move(self,req):
-        rospy.sleep(5.)
-        object_pos = [0,0,0,0,0,0,0]
-        object_pos[0:3] = [self.trans.transform.translation.x,self.trans.transform.translation.y,self.trans.transform.translation.z]
-        object_pos[3:]= self.ur5e_tool_above_pose
-        
-        self.move_group.go(self.ur5e_dual_home_js, wait=True)
-        self.move_group.stop()
-
-        self.move_group.go(self.ur5e_tool_above_js, wait=True)
-        self.move_group.stop()
-
-
-        scale = 1
-        waypoints = []
-
-        wpose = self.move_group.get_current_pose().pose
-        wpose.position.x = object_pos[0] - 0.018  #The offset from the save'd joint positions above the TE
-        wpose.position.y = object_pos[1] + 0.01
-        # wpose.position.y += scale * 0.2  # and sideways (y)
-        waypoints.append(copy.deepcopy(wpose))
-
-        # We want the Cartesian path to be interpolated at a resolution of 1 cm
-        # which is why we will specify 0.01 as the eef_step in Cartesian
-        # translation.  We will disable the jump threshold by setting it to 0.0,
-        # ignoring the check for infeasible jumps in joint space, which is sufficient
-        # for this tutorial.
-        (plan, fraction) = self.move_group.compute_cartesian_path(
-                                        waypoints,   # waypoints to follow
-                                        0.01,        # eef_step
-                                        0.0)         # jump_threshold
-
-        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
-        print(fraction)
-        self.move_group.execute(plan,wait=True)
-
-        
-        #############################################################################
-        waypoints = []
-        wpose = self.move_group.get_current_pose().pose
-        wpose.position.z = object_pos[2] + 0.12
-        # wpose.position.y += scale * 0.2  # and sideways (y)
-        waypoints.append(copy.deepcopy(wpose))
-
-        # We want the Cartesian path to be interpolated at a resolution of 1 cm
-        # which is why we will specify 0.01 as the eef_step in Cartesian
-        # translation.  We will disable the jump threshold by setting it to 0.0,
-        # ignoring the check for infeasible jumps in joint space, which is sufficient
-        # for this tutorial.
-        (plan, fraction) = self.move_group.compute_cartesian_path(
-                                        waypoints,   # waypoints to follow
-                                        0.01,        # eef_step
-                                        0.0)         # jump_threshold
-
-        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
-        print(fraction)
-        self.move_group.execute(plan,wait=True)
-        ############################################################################
-
-        self.close_ur5e(0)
-
-
-        scale = 1
-        waypoints = []
-
-        wpose = self.move_group.get_current_pose().pose
-        wpose.position.z = object_pos[2] + 0.25
-        # wpose.position.y += scale * 0.2  # and sideways (y)
-        waypoints.append(copy.deepcopy(wpose))
-
-        # We want the Cartesian path to be interpolated at a resolution of 1 cm
-        # which is why we will specify 0.01 as the eef_step in Cartesian
-        # translation.  We will disable the jump threshold by setting it to 0.0,
-        # ignoring the check for infeasible jumps in joint space, which is sufficient
-        # for this tutorial.
-        (plan, fraction) = self.move_group.compute_cartesian_path(
-                                        waypoints,   # waypoints to follow
-                                        0.01,        # eef_step
-                                        0.0)         # jump_threshold
-
-        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
-        print(fraction)
-        self.move_group.execute(plan,wait=True)
-        #############################################################################
-
-        self.move_group.go(self.ur5e_tool_goal_js, wait=True)
-        self.move_group.stop()
-
-
-        scale = 1
-        waypoints = []
-
-        wpose = self.move_group.get_current_pose().pose
-        wpose.position.x -= 0.05
-        # wpose.position.y += scale * 0.2  # and sideways (y)
-        waypoints.append(copy.deepcopy(wpose))
-
-        # We want the Cartesian path to be interpolated at a resolution of 1 cm
-        # which is why we will specify 0.01 as the eef_step in Cartesian
-        # translation.  We will disable the jump threshold by setting it to 0.0,
-        # ignoring the check for infeasible jumps in joint space, which is sufficient
-        # for this tutorial.
-        (plan, fraction) = self.move_group.compute_cartesian_path(
-                                        waypoints,   # waypoints to follow
-                                        0.01,        # eef_step
-                                        0.0)         # jump_threshold
-
-        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
-        print(fraction)
-        self.move_group.execute(plan,wait=True)
-
-        self.open_ur5e(0)
-
-        scale = 1
-        waypoints = []
-
-        wpose = self.move_group.get_current_pose().pose
-        wpose.position.x += 0.05
-        # wpose.position.y += scale * 0.2  # and sideways (y)
-        waypoints.append(copy.deepcopy(wpose))
-
-        # We want the Cartesian path to be interpolated at a resolution of 1 cm
-        # which is why we will specify 0.01 as the eef_step in Cartesian
-        # translation.  We will disable the jump threshold by setting it to 0.0,
-        # ignoring the check for infeasible jumps in joint space, which is sufficient
-        # for this tutorial.
-        (plan, fraction) = self.move_group.compute_cartesian_path(
-                                        waypoints,   # waypoints to follow
-                                        0.01,        # eef_step
-                                        0.0)         # jump_threshold
-
-        plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
-        print(fraction)
-        self.move_group.execute(plan,wait=True)
-
-
-       
-
-        
-    def cart_movement(self,req):
-        rospy.sleep(3.)
-        # self.move_group_16.go(self.goal_tool_js, wait=True)
-        # self.move_group.stop()
-        ###########################          Move Down         #############################
-        scale = 1
-        waypoints = []
-
-        wpose = self.move_group_16.get_current_pose().pose
-        wpose.position.y -= 0.05  #The offset from the save'd joint positions above the TE
-        # wpose.position.y += scale * 0.2  # and sideways (y)
-        waypoints.append(copy.deepcopy(wpose))
-
-        # We want the Cartesian path to be interpolated at a resolution of 1 cm
-        # which is why we will specify 0.01 as the eef_step in Cartesian
-        # translation.  We will disable the jump threshold by setting it to 0.0,
-        # ignoring the check for infeasible jumps in joint space, which is sufficient
-        # for this tutorial.
-        (plan, fraction) = self.move_group_16.compute_cartesian_path(
-                                        waypoints,   # waypoints to follow
-                                        0.01,        # eef_step
-                                        0.0)         # jump_threshold
-
-        plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
-        print(fraction)
-        self.move_group_16.execute(plan,wait=True)
-
-        ###########################         Move Away from system           #############################
-        waypoints = []
-
-        wpose = self.move_group_16.get_current_pose().pose
-        wpose.position.z += 0.05  #Move to release the tool
-        # wpose.position.y += scale * 0.2  # and sideways (y)
-        waypoints.append(copy.deepcopy(wpose))
-
-        # We want the Cartesian path to be interpolated at a resolution of 1 cm
-        # which is why we will specify 0.01 as the eef_step in Cartesian
-        # translation.  We will disable the jump threshold by setting it to 0.0,
-        # ignoring the check for infeasible jumps in joint space, which is sufficient
-        # for this tutorial.
-        (plan, fraction) = self.move_group_16.compute_cartesian_path(
-                                        waypoints,   # waypoints to follow
-                                        0.01,        # eef_step
-                                        0.0)         # jump_threshold
-
-        plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
-        print(fraction)
-        self.move_group_16.execute(plan,wait=True)
-
-    
-
-    def demo_move(self,req):
-        
-        self.move_group.go(self.ur5e_home_pose, wait=True)
-        self.move_group.stop()
-
-        print("just before picking it up")
-        pick_pose = [0,0,0,0,0,0,0]
-        pick_pose[0] = self.trans.transform.translation.x - 0.0
-        pick_pose[1] = self.trans.transform.translation.y + 0.02
-        pick_pose[2] = self.trans.transform.translation.z - 0.065
-        pick_pose[3] = self.ur5e_hori_ee_pose[0]
-        pick_pose[4] = self.ur5e_hori_ee_pose[1]
-        pick_pose[5] = self.ur5e_hori_ee_pose[2]
-        pick_pose[6] = self.ur5e_hori_ee_pose[3]
-
-        self.move_group.set_pose_target(pick_pose)
-        self.move_group.go(wait=True)
-        self.move_group.stop()
-        self.move_group.clear_pose_targets()
-
-        print("picking up")
-        pick_pose[0] = self.trans.transform.translation.x +  0.1
-        pick_pose[1] = self.trans.transform.translation.y + 0.02
-        pick_pose[2] = self.trans.transform.translation.z - 0.065
-        
-        self.move_group.set_pose_target(pick_pose)
-        self.move_group.go(wait=True)
-        self.move_group.stop()
-        self.move_group.clear_pose_targets()
-        self.close_ur5e(0)
-
-        print("moving up")
-        pick_pose[0] = self.trans.transform.translation.x +  0.0
-        pick_pose[1] = self.trans.transform.translation.y + 0.02
-        pick_pose[2] = self.trans.transform.translation.z + 0.03
-        
-        self.move_group.set_pose_target(pick_pose)
-        self.move_group.go(wait=True)
-        self.move_group.stop()
-        self.move_group.clear_pose_targets()
-
-        print("Rotating")
-        pick_pose[3] = self.ur5e_vert_ee_pose[0]
-        pick_pose[4] = self.ur5e_vert_ee_pose[1]
-        pick_pose[5] = self.ur5e_vert_ee_pose[2]
-        pick_pose[6] = self.ur5e_vert_ee_pose[3]
-
-        self.move_group.set_pose_target(pick_pose)
-        self.move_group.go(wait=True)
-        self.move_group.stop()
-        self.move_group.clear_pose_targets()
-
-        self.ur5e_goal_pose[1] = self.ur5e_goal_pose[1] - 0.02
-        self.move_group.set_pose_target(self.ur5e_goal_pose)
-        self.move_group.go(wait=True)
-        self.move_group.stop()
-        self.move_group.clear_pose_targets()
-
-        self.ur5e_goal_pose[1] = self.ur5e_goal_pose[1] + 0.02
-        self.move_group.set_pose_target(self.ur5e_goal_pose)
-        self.move_group.go(wait=True)
-        self.move_group.stop()
-        self.move_group.clear_pose_targets()
-        
+            
 def main(): #The main function.
     rospy.init_node("MockUpNode")
     try:
