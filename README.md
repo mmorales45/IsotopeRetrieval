@@ -25,9 +25,11 @@ cd ..
 rosdep install --from-paths src --ignore-src -r -y
 catkin_make
 ```
-# For Single Arm Control
+# Arm Control
 
-### UR5e Example
+## Single Arm Control
+
+UR5e Example
 
 Regardless of which arm you want to control, run the first command below but with the correct UR type and IP address, ex. ur16e_bringup.launch. The services to power on, play the external control script are the same. Make sure to also run the correct moveit_planning_exection.launch file by appending the correct arm, ex. ur16e_.
 
