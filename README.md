@@ -5,6 +5,26 @@ By Marco Morales
 
 ![Robot_second](pictures/ArgonnePic2.png) -->
 
+## Software
+
+Choose one set
+
+Ubuntu 18.04 and ROS MELODIC 
+
+Ubuntu 20.04 and ROS NOETIC
+
+## Hardware
+
+[UR5e](https://www.universal-robots.com/products/ur5-robot/)
+
+[UR16e](https://www.universal-robots.com/products/ur16-robot/)
+
+[MiR250](https://www.mobile-industrial-robots.com/solutions/robots/mir250/)
+
+[Intel D435](https://www.intelrealsense.com/depth-camera-d435/)
+
+[Robotiq Gripper 2F-85](https://robotiq.com/products/2f85-140-adaptive-robot-gripper)
+
 ## Prerequisites
 
 To download the packages, please install vcstool using the following link
