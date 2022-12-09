@@ -7,7 +7,7 @@ repositories:
     type: git
     url: https://github.com/mmorales45/robotiq.git
     version: kinetic-devel
-  IsotopeRetrieval:
+  argonne_final_project:
     type: git
     url: https://github.com/mmorales45/IsotopeRetrieval.git
     version: main

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(IsotopeRetrival)
+project(argonne_final_project)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -193,13 +193,10 @@ catkin_install_python(PROGRAMS
   nodes/pick_object
   nodes/test_robotiq.py
   nodes/mir_com
-  nodes/new_demo
   nodes/cartesian_path
-  nodes/moving_demo
   GUI/hardwareSrcNode
   GUI/GUI.py
   nodes/manipulation_node
-  nodes/state_handler
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
