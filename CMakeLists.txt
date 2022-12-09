@@ -192,7 +192,7 @@ catkin_install_python(PROGRAMS
   nodes/test_node
   nodes/pick_object
   nodes/test_robotiq.py
-  nodes/mir_test
+  nodes/mir_com
   nodes/new_demo
   nodes/cartesian_path
   nodes/moving_demo
