@@ -67,8 +67,8 @@ add_message_files(
 add_service_files(
   FILES
   CPose.srv
-  Quat.srv
   GripperName.srv
+  Quat.srv
 )
 
 ## Generate actions in the 'action' folder
