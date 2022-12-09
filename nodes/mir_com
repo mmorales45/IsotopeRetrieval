@@ -3,8 +3,7 @@
 #python3 needs tkinter, python 2.7 needs Tkinter
 
 """
-    Manipulation node takes care of process of assembling and disassembling the target. It also controls 
-    the missions being sent to the MiR 250 and the grippers.
+    MiR node to provide services to the manipulation node to send the mobile base to goals.
 
     SERVICES:
         marco/moveto_goalA (std_srvs/Empty) - Send robot to Goal A
