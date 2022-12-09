@@ -57,7 +57,8 @@ class MockUp:
         
         self.joint_pos_srv = rospy.Service("marco/joint_pos", Empty , self.joint_pos)
         self.arm_pos_srv = rospy.Service("marco/arm_pos", Empty , self.arm_pos)
-        
+        self.move_GOALA = rospy.ServiceProxy('marco/moveto_goalA', Empty)
+        self.move_GOALB = rospy.ServiceProxy('marco/moveto_goalB', Empty)
         self.setup_grippers()
         self.tuck() 
         
@@ -72,7 +73,8 @@ class MockUp:
 
         self.new_flag = 0
         self.state = 1
-
+        
+        self.move_GOALA()
         self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
 
     
@@ -345,6 +347,8 @@ class MockUp:
         plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
         print(fraction)
         self.move_group.execute(plan,wait=True)
+
+        self.move_GOALB()
 
 
     def replace(self,req):
