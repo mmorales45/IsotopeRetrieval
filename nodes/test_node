@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+
+"""
+    Test node used to make sure the UR arms can be controlled with ROS
+
+    SERVICES:
+        step_left (std_srvs/Empty) - Move the UR5e
+        step_right(std_srvs/Empty) - Move the UR16e
+
+"""
+
 import sys
 
 import rospy
@@ -37,47 +47,29 @@ class Mover:
         self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
 
     def main_loop(self,timer):
-        # temp_pos = self.move_group.get_current_pose("manipulator")
-	a = 1
+        pass
 
     def step_left(self,req):
         '''
-        Function: Moves the robot to a specified x, y, z coordinates. Also moves the gripper.
-        Arguments:Pose, but only uses the x, y, z coordinates. Also, true or false arguments for opening and closing the gripper.
-        Return: Error code, 1 for success and -1 for failure.
+            Function: Moves the robot to a specified x, y, z coordinates. Also moves the gripper.
+            Arguments:Pose, but only uses the x, y, z coordinates. Also, true or false arguments for opening and closing the gripper.
+            Return: Error code, 1 for success and -1 for failure.
         '''
-	print("error1")
         self.move_group.set_joint_value_target(pos_left)
-	'''
-	#only works with python3
-	print("error2")
-        # move_group.set_pose_target(pose_in_space)
-        ##use set_target_position
-        (success_flag, trajectory_message,planning_time, error_code) = self.move_group.plan()
-	print("error3")
-        if success_flag == False:
-            return error_code
-	print("error4")
-        self.move_group.execute(trajectory_message, wait=TRUE)
-	'''
         self.move_group.go(wait=True)
         self.move_group.stop()
         self.move_group.clear_pose_targets()
  
-        ###########################################
-
         return EmptyResponse()
 
     
     def step_right(self,req):
         '''
-        Function: Moves the robot to a specified x, y, z coordinates. Also moves the gripper.
-        Arguments:Pose, but only uses the x, y, z coordinates. Also, true or false arguments for opening and closing the gripper.
-        Return: Error code, 1 for success and -1 for failure.
+            Function: Moves the robot to a specified x, y, z coordinates. Also moves the gripper.
+            Arguments:Pose, but only uses the x, y, z coordinates. Also, true or false arguments for opening and closing the gripper.
+            Return: Error code, 1 for success and -1 for failure.
         '''
         self.move_group.set_joint_value_target(pos_right)
-        # move_group.set_pose_target(pose_in_space)
-        ##use set_target_position
         (success_flag, trajectory_message,planning_time, error_code) = self.move_group.plan()
         if success_flag == False:
             return error_code
@@ -85,8 +77,6 @@ class Mover:
         self.move_group.stop()
         self.move_group.clear_pose_targets()
  
-        ###########################################
-
         return EmptyResponse()
 
 
