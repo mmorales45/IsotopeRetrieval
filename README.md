@@ -31,10 +31,10 @@ To download the packages, please install vcstool using the following link
 
 [vcstool github link](https://github.com/dirk-thomas/vcstool)
 
-Once completed, import the .repos file using the following command line in the src folder of your workspace.
+Once completed, import the .repos file using the following command line in the src folder of your workspace. Note, that even before downloading this repo, add the DualArmMIR.repos files in the base of your repository and following the command below.
 
 ```
-vcs import < DualArmMIR.repos
+vcs import < DualArmMiR.repos
 ```
 
 Next install any dependencies the packages have using the commands below.
