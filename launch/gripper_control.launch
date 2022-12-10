@@ -1,10 +1,12 @@
 <?xml version="1.0"?>
 <launch>
 
+  <!--Launch the Gripper control launchfile for the UR5e with a namespace-->
   <group ns="ur5e">
     <node name = "Robotiq2FGripperRtuNode" pkg="robotiq_2f_gripper_control" type="Robotiq2FGripperRtuNode.py" args="/tmp/ttyUR5e" />
   </group>
 
+  <!--Launch the Gripper control launchfile for the UR16e with a namespace-->
   <group ns="ur16e">
     <node name = "Robotiq2FGripperRtuNode" pkg="robotiq_2f_gripper_control" type="Robotiq2FGripperRtuNode.py" args="/tmp/ttyUR16e" />
   </group>

@@ -8,6 +8,7 @@
     <!-- Laucnh the node and param -->
     <rosparam file="$(find argonne_final_project)/config/saved_pos.yaml" />
 
+    <!-- Laucnh the manipulation node -->
     <node name="manipulation_node" pkg="argonne_final_project" type="manipulation_node" output="screen"/>
 
     <!-- Launch IntelCam and AprilTags-->

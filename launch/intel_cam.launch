@@ -11,8 +11,7 @@
     <arg name="camera_name" value="/camera/color"/>
     <arg name="image_topic" value="image_raw"/>
   </include>
-  <!-- When camera is in front of ur5e -->
-  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="connecting_hw_to_camera" args ="0.15 0.0 0.9 0.0 0.0 0.0 connecting_hardware camera_link" /> -->
 
+  <!--Create a static transfrom from the conencting hardware to the camera_link-->
   <node pkg="tf2_ros" type="static_transform_publisher" name="connecting_hw_to_camera" args ="0.026 0.31 0.96 1.57 0.0 0.0 connecting_hardware camera_link" />
 </launch>
