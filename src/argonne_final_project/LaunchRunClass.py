@@ -2,15 +2,19 @@
 #This is a class to launch and run nodes. See the example at the bottom
 import roslaunch, rospkg, os,rospy
 from time import sleep
-
+print('howdy')
 
 class CustomNodeRun(object):
-
-    def __init__(self,package,executable,args = ''):
-        print("this this work")
+    """
+    Create A class that can run nodes from a launch file with given parameters.
+    """
+    def __init__(self,package,executable,args = '',args2 = ''):
+        print('got here')
         self.package = package
         self.executable = executable 
+        print(args)
         self.args = args
+        self.args2 = args2
         self.node = roslaunch.core.Node(package, executable, output = "screen",args=self.args)
 
         self.launch = roslaunch.scriptapi.ROSLaunch()
@@ -19,21 +23,36 @@ class CustomNodeRun(object):
         self.process = None
 
     def start(self):
+        """
+            Function:
+                Start the node.
+        """
         self.process = self.launch.launch(self.node)
         return self
 
     def stop(self):
+        """
+            Function:
+                Kill the node.
+        """
         if self.process is not None:
             if self.process.is_alive():
                 self.process.stop()
 
     def is_alive(self):
+        """
+            Function:
+                Check the status of the node, whether it is running or killed.
+        """
         if self.process is None:return False
         return self.process.is_alive() 
 
 
 
 class CustomLaunchRun(object):
+    """
+    Run a launch file from this class.
+    """
     def __init__(self,package,executable):
         self.package = package
         self.executable = executable
@@ -54,6 +73,10 @@ class CustomLaunchRun(object):
         self.launch = None
 
     def start(self):
+        """
+            Function:
+                Run the launch file give the path.
+        """
         self.uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
         roslaunch.configure_logging(self.uuid)
         self.launch = roslaunch.parent.ROSLaunchParent(self.uuid, [self.launchFile])
@@ -61,37 +84,9 @@ class CustomLaunchRun(object):
         self.launch.start()
         return self
     def stop(self):
+        """
+            Function:
+                Ends the launch.
+        """
         if self.launch is not None: self.launch.shutdown()
 
-
-"""
-#Example Below
-if __name__ == '__main__':
-    #Creating a launch file
-    print("Testing")
-    testLaunch = CustomLaunchRun("kinfu", "kinect_single.launch")
-    sleep(5)
-    
-    #How to start a launch
-    print("Starting Launch")
-    testLaunch.start()
-    sleep(5)
-    
-    #how to Stop a Launch
-    print("Stopping Launch")
-    testLaunch.stop()
-
-
-    #Run a file
-
-    #Start an executable 
-    #Create a Node and start it in one command
-    ControllerExtractionNode = CustomNodeRun('baxter_tools','tuck_arms.py','-u').start()
-    print(ControllerExtractionNode.is_alive())#check if the program is still alive
-
-    sleep(25)
-
-    #Stoping the programs
-    ControllerExtractionNode.stop()
-    print(ControllerExtractionNode.is_alive())
-"""

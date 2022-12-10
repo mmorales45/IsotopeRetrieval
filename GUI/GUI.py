@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""
+This node is a GUI that can be used to make it easier for a user to do basic control of the system such as turning on/off, running scripts and doing basic motion control 
+through a GUI and not having to use the command line for most things.
+
+"""
 from multiprocessing import cpu_count
 import sys
 from PyQt5 import QtGui
@@ -54,16 +59,25 @@ atexit.register(exit_handler)
         
 list_of_classes = []
 def kill_all():
-	print("Stoping all Processes...")
-	for class_name in list_of_classes:
-		class_name.stop()
-	print("All Processes Stopped")
+    """
+        Function:
+            Kill all instances of a node.
+    """
+
+    print("Stoping all Processes...")
+    for class_name in list_of_classes:
+        class_name.stop()
+    print("All Processes Stopped")
 
 
 powerOnur5e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POn_UR5e")
 list_of_classes.append(powerOnur5e)
 
 def powerOn5e():
+    """
+        Function:
+            Turn on the UR5e, do not release the brakes.
+    """
     print("Powering On UR5e")
     powerOnur5e.start()
 
@@ -71,6 +85,10 @@ powerOnur16e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POn_UR1
 list_of_classes.append(powerOnur5e)
 
 def powerOn16e():
+    """
+        Function:
+            Turn on the UR16e, do not release the brakes.
+    """
     print("Powering On UR16e")
     powerOnur16e.start()
 ##
@@ -78,6 +96,10 @@ powerOffur5e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POff_UR
 list_of_classes.append(powerOffur5e)
 
 def powerOff5e():
+    """
+        Function:
+            Turn off the UR5e.
+    """
     print("Powering Off UR16e")
     powerOffur5e.start()
 
@@ -85,6 +107,10 @@ powerOffur16e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-POff_U
 list_of_classes.append(powerOffur16e)
 
 def powerOff16e():
+    """
+        Function:
+            Turn off the UR16e.
+    """
     print("Powering Off UR16e")
     powerOffur16e.start()
 ##
@@ -92,6 +118,10 @@ BRur5e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-BR_UR5e")
 list_of_classes.append(BRur5e)
 
 def br5e():
+    """
+        Function:
+            Turn on the UR5e and release the brakes.
+    """
     print("Powering Off UR16e")
     BRur5e.start()
 
@@ -99,12 +129,19 @@ BRur16e= CustomNodeRun("argonne_final_project", "hardwareSrcNode","-BR_UR16e")
 list_of_classes.append(BRur16e)     
 
 def br16e():
+    """
+        Function:
+            Turn on the UR16e and release the brakes.
+    """
     print("Powering Off UR16e")
     BRur16e.start()
 
 
 class Window(QMainWindow):
     def __init__(self):
+        """
+        Create the main interface of the GUI.
+        """
         super(Window,self).__init__()
         self.setStyleSheet("background-color: white;")
         self.title = "GUI"
@@ -142,6 +179,10 @@ class Window(QMainWindow):
         self.main_window()
 
     def main_window(self):
+        """
+            Function:
+                Create the main window of the main menu.
+        """
         self.label = QLabel("Manager", self)
         self.label.move(285, 175)
         self.setWindowTitle(self.title)
@@ -149,26 +190,45 @@ class Window(QMainWindow):
         self.show()
 
     def window2(self):                                             # <===
+        """
+            Function:
+                Go to the main menu window, useful when on other menus.
+        """
         self.w = CreateGUi()
         self.w.show()
         self.hide()
     def window3(self):                                             # <===
+        """
+            Function:
+                Go to the Menu that allows for pose input and control.
+        """
         self.w = Ui_MainWindow()
         self.w.show()
         self.hide()
 
     def window4(self):                                             # <===
+        """
+            Function:
+                Go to the joint control menu.
+        """
         self.w = Jsp_MainWindow()
         self.w.show()
         self.hide()
     
     def window5(self):                                             # <===
+        """
+            Function:
+                Go to the menu for hardware functions such as turning on and off the robot.
+        """
         self.w = ActionsCLass()
         self.w.show()
         self.hide()
     
 
 class CreateGUi(QMainWindow):
+    """
+        Create the Gui is in charge of control robot functions.
+    """
     def __init__(self):
         QMainWindow.__init__(self)
 
@@ -205,63 +265,143 @@ class CreateGUi(QMainWindow):
         self.show()
         
     def Button1(self):
+        """
+            Function:
+                Power on the UR5e
+        """
         powerOn5e()
         
     def Button2(self):
+        """
+            Function:
+                Power on the UR16e
+        """
         powerOn16e()
 
     def Button3(self):
+        """
+            Function:
+                Power off the UR5e
+        """
         powerOff5e()
         
     def Button4(self):
+        """
+            Function:
+                Power off the UR16e
+        """
         powerOff16e()
     
     def Button5(self):
+        """
+            Function:
+                Power on the UR5e and release the brakes
+        """
         br5e()
         
     def Button6(self):
+        """
+            Function:
+                Power on the UR16e and release the brakes
+        """
         br16e()
 
     def Button7(self):
+        """
+            Function:
+                Play the last script that was loaded on the UR5e, should be the External Control script.
+        """
         ur5e_play_srv()
         
     def Button8(self):
+        """
+            Function:
+                Play the last script that was loaded on the UR16e, should be the External Control script.
+        """
         ur16e_play_srv()
 
     def Button10(self):
+        """
+            Function:
+                Stop the script from playing. Should be able to stop ROS control.
+        """
         ur5e_stop_srv()
         
     def Button11(self):
+        """
+            Function:
+                Stop the script from playing for the UR16e. Should be able to stop ROS control.
+        """
         ur16e_stop_srv()
 
     def Button13(self):
+        """
+            Function:
+                Unlock the UR5e from the protective stop, usually after collision.
+        """
         ur5e_proRelease_srv()
         
     def Button14(self):
+        """
+            Function:
+                Close the popup that can appear on the UR16e's computer, such as the positin verified issue.
+        """
         ur16e_closePOP_srv()
     
     def Button15(self):
+        """
+            Function:
+                Close the popup that can appear on the UR5e's computer, such as the positin verified issue.
+        """
         ur5e_closePOP_srv()
         
     def Button16(self):
+        """
+            Function:
+                Unlock the UR16e from the protective stop, usually after collision.
+        """
         ur16e_proRelease_srv()
 
     def Button17(self):
+        """
+            Function:
+                Make the System put the object in front of the mir base.
+        """
         analyze_object_srv()
 
     def Button18(self):
+        """
+            Function:
+                Make the System pick up the goal object using the UR5e
+        """
         retrieve_object_srv()
 
     def Button19(self):
+        """
+            Function:
+                Assemble the object using the UR16e.
+        """
         assememble_object_srv()
 
     def Button20(self):
+        """
+            Function:
+                Using the UR16e, disassemble the object.
+        """
         disassemble_object_srv()
 
     def ButtonReturn(self):
+        """
+            Function:
+                Return to the main window, the one that is the parent of the current one.
+        """
         self.returnWindow()
 
     def Refresh(self):
+        """
+            Function:
+                Refresh the window to update it based on the button pressed.
+        """
         if self.count > 0:
             self.bt3.setText(str(self.count)+' seconds')
             self.count -= 1
@@ -271,12 +411,25 @@ class CreateGUi(QMainWindow):
             self.bt3.setText('Button 3')
             self.count = 10
     def center(self):
+        """
+            Function:
+                Center the window.
+        """
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
     def createSingleButton(self,title,length,width,color):
+        """
+            Function:
+                Function used to create a button of a color type.
+            args:
+                title - Title of the button
+                length - The length of the button
+                width - The width of the button
+                color - The color of the button
+        """
         button = QPushButton(title,self)
         button.resize(length, width)
         if color == "green":
@@ -290,12 +443,25 @@ class CreateGUi(QMainWindow):
 
         return button
     def space_out(self,list,space,x,y):
+        """
+            Function:
+                Space out the list of buttons to make it uniformed and not clustered.
+            args:
+                list - The list of buttons 
+                space - space between the buttons
+                x - the x position of the first button on the list
+                y - the y position of the first button on the list
+        """
         current_x = x
         for i in list:
             i.move(current_x,y)
             current_x += space
             
     def createAllButtons(self):
+        """
+            Function:
+                Create all the buttons on the current page of the GUI.
+        """
         length = 140
         width = 45
         self.bt1 = self.createSingleButton("PowerOn UR5e",length,width,"green")
@@ -351,6 +517,9 @@ class CreateGUi(QMainWindow):
 
 class ActionsCLass(QMainWindow):
     def __init__(self):
+        """
+        Create a menu of actions, such as assembly and position control.
+        """
         QMainWindow.__init__(self)
 
         self.setMinimumSize(QSize(700, 350))    
@@ -372,6 +541,10 @@ class ActionsCLass(QMainWindow):
         self.show()
         
     def Button1(self):
+        """
+            Function:
+                Make the System put the object in front of the mir base.
+        """
         a = Empty()
         try:
             analyze_object_srv()
@@ -379,6 +552,10 @@ class ActionsCLass(QMainWindow):
             pass
 
     def Button2(self):
+        """
+            Function:
+                Make the System pick up the goal object using the UR5e
+        """
         a = Empty()
         try:
             retrieve_object_srv()
@@ -386,22 +563,46 @@ class ActionsCLass(QMainWindow):
             pass
 
     def Button3(self):
+        """
+            Function:
+                Assemble the object using the UR16e.
+        """
         assememble_object_srv()
 
     def Button4(self):
+        """
+            Function:
+                Using the UR16e, disassemble the object.
+        """
         disassemble_object_srv()
     
     def Button5(self):
+        """
+            Function:
+                Send the MiR mobile base to the first goal.
+        """
         goto_goal_srv(0)
         
     def Button6(self):
+        """
+            Function:
+                Send the MiR mobile base to the second goal.
+        """
         goto_start_srv(0)
 
 
     def ButtonReturn(self):
+        """
+            Function:
+                Go to the main menu.
+        """
         self.returnWindow()
 
     def Refresh(self):
+        """
+            Function:
+                Refresh the window to update it based on the button pressed.
+        """
         if self.count > 0:
             self.bt3.setText(str(self.count)+' seconds')
             self.count -= 1
@@ -411,12 +612,25 @@ class ActionsCLass(QMainWindow):
             self.bt3.setText('Button 3')
             self.count = 10
     def center(self):
+        """
+            Function:
+                Center the main menu.
+        """
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
     def createSingleButton(self,title,length,width,color):
+        """
+            Function:
+                Function used to create a button of a color type.
+            args:
+                title - Title of the button
+                length - The length of the button
+                width - The width of the button
+                color - The color of the button
+        """
         button = QPushButton(title,self)
         button.resize(length, width)
         if color == "green":
@@ -430,12 +644,20 @@ class ActionsCLass(QMainWindow):
 
         return button
     def space_out(self,list,space,x,y):
+        """
+            Function:
+                Create all the buttons on the current page of the GUI.
+        """
         current_x = x
         for i in list:
             i.move(current_x,y)
             current_x += space
             
     def createAllButtons(self):
+        """
+            Function:
+                Create all the buttons on the current page of the GUI.
+        """
         length = 140
         width = 45
         self.bt1 = self.createSingleButton("Analyze",length,width,"green")
@@ -471,6 +693,10 @@ class ActionsCLass(QMainWindow):
         return all_buttons
     
     def returnWindow(self):                                             # <===
+        """
+            Function:
+                Go to the home menu.
+        """
         print('hi')
         self.w = Window()
         self.w.show()
@@ -478,10 +704,17 @@ class ActionsCLass(QMainWindow):
         
 class Ui_MainWindow(QMainWindow):
     def __init__(self):
+        """
+        Create a window for pose or cartesian control
+        """
         QMainWindow.__init__(self)
         self.setupUi(1)
 
     def setupUi(self, QMainWindow):
+        """
+            Function:
+                Create the UI for the window.
+        """
         self.resize(422, 355)
         self.centralwidget = QtWidgets.QWidget(self)
 
@@ -499,10 +732,18 @@ class Ui_MainWindow(QMainWindow):
         self.retranslateUi(Window)
         QtCore.QMetaObject.connectSlotsByName(self)
     def returnWindow(self):                                             # <===
+        """
+            Function:
+                Return to the main window
+        """
         self.w = Window()
         self.w.show()
         self.hide()
     def retranslateUi(self, window):
+        """
+            Function:
+                Refresh the window and add all the buttons.
+        """
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.pushButton.setText(_translate("MainWindow", "Proceed"))
@@ -519,6 +760,10 @@ class Ui_MainWindow(QMainWindow):
         self.pushRetry.move(50, 200)
         
     def takeinputs(self):
+        """
+            Function:
+                Using values such as xyz, send the specified robot to the goal position.
+        """
         name, done0 = QtWidgets.QInputDialog.getText(
             self, 'Input Dialog', 'Enter Robot Name:')
         pos_x, done1 = QtWidgets.QInputDialog.getDouble(
@@ -556,6 +801,10 @@ class Ui_MainWindow(QMainWindow):
             self.name = name
             self.pushButton.hide()
     def cartesian_Move(self):
+        """
+            Function:
+                Send the robot a pose goal and make the robot move there with a cartesian movement.
+        """
         print(self.new_pose)
         a = list_to_pose(self.new_pose)
         send_pose = CPose
@@ -567,16 +816,27 @@ class Ui_MainWindow(QMainWindow):
         return Empty
 
     def get_EE_pos(self):
+        """
+            Function:
+                Print the pose position of the robot.
+        """
         ur_poses_srv
         return Empty
 
 
 class Jsp_MainWindow(QMainWindow):
+    """
+    Create menu to control the robot using joint control.
+    """
     def __init__(self):
         QMainWindow.__init__(self)
         self.setupUi(1)
 
     def setupUi(self, QMainWindow):
+        """
+            Function:
+                Setup the UI for the window
+        """
         self.resize(422, 255)
         self.centralwidget = QtWidgets.QWidget(self)
 
@@ -595,6 +855,10 @@ class Jsp_MainWindow(QMainWindow):
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def retranslateUi(self, window):
+        """
+            Function:
+                Refresh the window and add all the buttons.
+        """
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.pushButton.setText(_translate("MainWindow", "Proceed"))
@@ -611,6 +875,10 @@ class Jsp_MainWindow(QMainWindow):
         self.pushRetry.move(50, 200)
         
     def takeinputs(self):
+        """
+            Function:
+                Use the inputs in the dialog box to input desired values for each joint.
+        """
         j1, done1 = QtWidgets.QInputDialog.getDouble(
         self, 'Input Dialog', 'Value for Joint 1')
 
@@ -642,6 +910,10 @@ class Jsp_MainWindow(QMainWindow):
             self.jointStates = [j1,j2,j3,j4,j5,j6]
         self.pushButton.hide()
     def move_Joints(self):
+        """
+            Function:
+                Perform the joint movement.
+        """
         print(self.jointStates)
         a = list_to_pose(self.jointStates)
         print(a)
@@ -649,6 +921,10 @@ class Jsp_MainWindow(QMainWindow):
 # def joint_Control(joint_list):
 
     def returnWindow(self):                                             # <===
+        """
+            Function:
+                Go to the main window.
+        """
         self.w = Window()
         self.w.show()
         self.hide()
