@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-
+"""
+This script is used to call services by running the Class below and chosing to call the correct service based on the input to the class.
+"""
 import argparse
 
 from copy import deepcopy
@@ -9,7 +11,11 @@ import rospy
 from std_srvs.srv import Empty, Trigger
 
 class HardwareServices:
+    """
+    Create a set of services that can be used for when using the GUI based on the input to the class.
+    """
     def __init__(self, hw_cmd):
+        #Determine the value of the hw_cmd value and create services based on it.
         print(hw_cmd)
         self.__done = False
         rospy.wait_for_service('/ur5e/ur_hardware_interface/dashboard/power_on')
@@ -21,9 +27,8 @@ class HardwareServices:
 
         self.__BR5e = rospy.ServiceProxy("/ur5e/ur_hardware_interface/dashboard/brake_release",Trigger)
         self.__BR16e = rospy.ServiceProxy("/ur16e/ur_hardware_interface/dashboard/brake_release",Trigger)
-        # self.clean_shutdown()
-        # while not rospy.is_shutdown():
-        #     pass
+
+        #Switch case for arguments
         if hw_cmd == '-POn_UR5e':
             self.__powerOn5e()
         elif hw_cmd == '-POn_UR16e':
@@ -49,10 +54,8 @@ def main():
     hardware_group = parser.add_mutually_exclusive_group(required=True)
 
 
-    # if rospy.myargv()[1:] == ''
     rospy.loginfo("Initializing node... ")
     rospy.init_node("rsdk_tuck_arms")
-    # rospy.loginfo("%sucking arms" % ("T" if tuck else "Unt",))
     hardwarer = HardwareServices(rospy.myargv()[1])
     rospy.on_shutdown(hardwarer.clean_shutdown)
     rospy.loginfo("Finished tuckerrr")
