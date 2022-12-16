@@ -3,10 +3,10 @@ repositories:
     type: git
     url: https://github.com/mmorales45/Universal_Robots_ROS_Driver.git
     version: working
-  robotiq:
+  apriltag_ros:
     type: git
-    url: https://github.com/mmorales45/robotiq.git
-    version: kinetic-devel
+    url: https://github.com/AprilRobotics/apriltag_ros.git
+    version: master
   argonne_final_project:
     type: git
     url: https://github.com/mmorales45/IsotopeRetrieval.git
@@ -15,16 +15,19 @@ repositories:
     type: git
     url: https://github.com/mmorales45/dual_arm_moveit_config.git
     version: main
-  sdl_robot_description:
+  fmauch_universal_robot:
     type: git
-    url: https://github.com/mmorales45/sdl_robot_description.git
-    version: main
-  apriltag_ros:
-    type: git
-    url: https://github.com/AprilRobotics/apriltag_ros.git
-    version: master
+    url: https://github.com/fmauch/universal_robot.git
+    version: calibration_devel
   mir_robot:
     type: git
     url: https://github.com/dfki-ric/mir_robot.git
     version: noetic
-  
+  robotiq:
+    type: git
+    url: https://github.com/mmorales45/robotiq.git
+    version: kinetic-devel
+  sdl_robot_description:
+    type: git
+    url: https://github.com/mmorales45/sdl_robot_description.git
+    version: main
