@@ -36,7 +36,18 @@ Once completed, import the .repos file using the following command line in the s
 ```
 vcs import < DualArmMiR.repos
 ```
+Other way
 
+```
+git clone -b working https://github.com/mmorales45/Universal_Robots_ROS_Driver.git
+git clone -b master https://github.com/AprilRobotics/apriltag_ros.git
+git clone -b main https://github.com/mmorales45/IsotopeRetrieval.git
+git clone -b main https://github.com/mmorales45/dual_arm_moveit_config.git
+git clone -b calibration_devel https://github.com/fmauch/universal_robot.git
+git clone -b noetic https://github.com/dfki-ric/mir_robot.git
+git clone -b kinetic-devel https://github.com/mmorales45/robotiq.git
+git clone -b main https://github.com/mmorales45/sdl_robot_description.git
+```
 Next install any dependencies the packages have using the commands below.
 
 ```
