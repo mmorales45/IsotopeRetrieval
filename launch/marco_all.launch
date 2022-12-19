@@ -1,0 +1,14 @@
+<launch>
+    <!-- Launch RVIZ config -->
+    <node name="rviz" pkg = "rviz" type="rviz" args=" -d $(find argonne_final_project)/config/lab.rviz" />
+
+    <!-- Launch move_group aka MOVEIT -->
+    <include file="$(find dual_arm_moveit_config)/launch/move_group.launch" pass_all_args="true"/>
+
+    <!-- Launch IntelCam and AprilTags-->
+    <include file="$(find argonne_final_project)/launch/intel_cam.launch" pass_all_args="true"/>
+
+    <!-- Laucnh the node -->
+    <node name="moving_demo" pkg="argonne_final_project" type="moving_demo" output="screen"/>
+
+</launch>

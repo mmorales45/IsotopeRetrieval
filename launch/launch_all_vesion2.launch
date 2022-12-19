@@ -5,7 +5,7 @@
   <!--GET IP ADDRESS OF ur16e-->
   <arg name="ur16e_kinematics" default="$(find ur_description)/config/ur16e/default_kinematics.yaml"/>
   <arg name="ur16e_controller_config_file" default="$(find argonne_final_project)/etc/ur16e_controllers.yaml"/>
-  <arg name="ur16e_ip" default="192.168.12.242"/>
+  <arg name="ur16e_ip" default="192.168.12.243"/>
   <arg name="ur16e_reverse_port" default="50004"/>
   <arg name="ur16e_script_sender_port" default="50005"/>
   <arg name="ur16e_trajectory_port" default="50006"/>
@@ -28,22 +28,10 @@
   </include>
 
   <group ns="ur16e">
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-      <!-- <remap from="joint_states" to="/joint_states"/> -->
-    </node>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
     <include file="$(find ur_robot_driver)/launch/ur_control.launch">
-
-      <arg name="use_tool_communication" value="true"/>
-      <arg name="tool_voltage" value="24"/>
-      <arg name="tool_parity" value="0"/>
-      <arg name="tool_baud_rate" value="115200"/>
-      <arg name="tool_stop_bits" value="1"/>
-      <arg name="tool_rx_idle_chars" value="1.5"/>
-      <arg name="tool_tx_idle_chars" value="3.5"/>
-      <arg name="tool_device_name" value="/tmp/ttyUR16e"/>
-
-
+      <arg name="use_tool_communication" value="$(arg use_tool_communication)"/>
       <arg name="controller_config_file" value="$(arg ur16e_controller_config_file)"/>
       <arg name="robot_ip" value="$(arg ur16e_ip)"/>
       <arg name="reverse_port" value="$(arg ur16e_reverse_port)"/>
@@ -54,25 +42,13 @@
       <arg name="controllers" value="$(arg controllers)"/>
       <arg name="stopped_controllers" value="$(arg stopped_controllers)"/>
     </include>
-    <!-- <node name="joint_state_relay" type="relay" pkg="topic_tools" args="joint_states /joint_states"/> -->
   </group>
 
   <group ns="ur5e">
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-      <remap from="joint_states" to="/joint_states"/>
-    </node>
-
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
     <include file="$(find ur_robot_driver)/launch/ur_control.launch">
-      <arg name="use_tool_communication" value="true"/>
-      <arg name="tool_voltage" value="24"/>
-      <arg name="tool_parity" value="0"/>
-      <arg name="tool_baud_rate" value="115200"/>
-      <arg name="tool_stop_bits" value="1"/>
-      <arg name="tool_rx_idle_chars" value="1.5"/>
-      <arg name="tool_tx_idle_chars" value="3.5"/>
-      <arg name="tool_device_name" value="/tmp/ttyUR5e"/>
-        
+      <arg name="use_tool_communication" value="$(arg use_tool_communication)"/>
       <arg name="controller_config_file" value="$(arg ur5e_controller_config_file)"/>
       <arg name="robot_ip" value="$(arg ur5e_ip)"/>
       <arg name="reverse_port" value="$(arg ur5e_reverse_port)"/>
@@ -83,19 +59,13 @@
       <arg name="controllers" value="$(arg controllers)"/>
       <arg name="stopped_controllers" value="$(arg stopped_controllers)"/>
     </include>
-    <!-- <node name="joint_state_relay" type="relay" pkg="topic_tools" args="joint_states /joint_states"/> -->
   </group>
 
-  <rosparam param="source_list">[/ur5e/joint_stahites]</rosparam>
+  
   <!--Convenience stuff for demo purposes
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ur_example_dual_robot)/etc/view_robot.rviz" required="true" />
   <node name="rqt_joint_trajectory_controller" pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" respawn="false" output="screen">
   </node>
   -->
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" respawn="false">
-    <rosparam param="source_list">['/ur5e/joint_states','/ur16e/joint_states']</rosparam>
-  </node>
-
-  <include file="$(find argonne_final_project)/launch/gripper_control.launch"/>
 
 </launch>

@@ -67,8 +67,8 @@ add_message_files(
 add_service_files(
   FILES
   CPose.srv
-  GripperName.srv
   Quat.srv
+  GripperName.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -192,11 +192,14 @@ catkin_install_python(PROGRAMS
   nodes/test_node
   nodes/pick_object
   nodes/test_robotiq.py
-  nodes/mir_com
+  nodes/mir_test
+  nodes/new_demo
   nodes/cartesian_path
+  nodes/moving_demo
   GUI/hardwareSrcNode
   GUI/GUI.py
   nodes/manipulation_node
+  nodes/state_handler
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
