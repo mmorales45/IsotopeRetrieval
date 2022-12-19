@@ -30,7 +30,7 @@ class Mover:
         '''
         moveit_commander.roscpp_initialize(sys.argv)
         self.robot = moveit_commander.RobotCommander()
-        group_name = "manipulator"
+        group_name = "ur5e_arm"
         self.move_group = moveit_commander.MoveGroupCommander(group_name)
         self.robot_step_left = rospy.Service("step_left", Empty , self.step_left) 
         self.robot_step_right = rospy.Service("step_right", Empty , self.step_right) 

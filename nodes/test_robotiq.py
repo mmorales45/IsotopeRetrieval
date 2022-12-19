@@ -1,26 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-    Script used to initially control the Robotiq grippers using low level control.
-"""
-
 import time
 import signal
 from argonne_final_project.RobotiqHand import RobotiqHand
 
-
+#------------------------------------------------------------------------------
+# test_robotiq.py
+#------------------------------------------------------------------------------
 HOST = "192.168.12.248"
 PORT = 54321
 
 cont = True
 
+def handler(signal, frame):
+    global cont
+    cont = False
 
 def test_robotiq():
-    """
-        Function:
-            Make the gripper open and close to test its operation
-    """
     print 'test_robotiq start'
     hand = RobotiqHand()
     hand.connect(HOST, PORT)
@@ -34,6 +31,11 @@ def test_robotiq():
         if result != 0x31:
             hand.disconnect()
             return
+        # print 'adjust: start'
+        # hand.adjust()
+        # print 'adjust: finish'
+
+        # while cont:
         print 'close slow'
         hand.move(255, 100, 10)
         (status, position, force) = hand.wait_move_complete()
@@ -51,6 +53,7 @@ def test_robotiq():
         else:
             print 'failed'
 
+        print 'open fast'
         hand.move(0, 0, 0)
         (status, position, force) = hand.wait_move_complete()
         position_mm = hand.get_position_mm(position)
@@ -62,4 +65,5 @@ def test_robotiq():
     hand.disconnect()
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, handler)
     test_robotiq()

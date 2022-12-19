@@ -1,21 +1,4 @@
 #!/usr/bin/env python
-
-"""
-    Manipulation node takes care of process of assembling and disassembling the target. It also controls 
-    the missions being sent to the MiR 250 and the grippers.
-    Publishers:
-        ur5e/Robotiq2FGripperRobotOutput (outputMsg.Robotiq2FGripper_robot_output) - Send low level commands to the gripper on the UR5e
-        ur16e/Robotiq2FGripperRobotOutput (outputMsg.Robotiq2FGripper_robot_output) - Send low level commands to the gripper on the UR16e
-    SERVICES:
-        marco/open_ur5e (std_srvs/Empty) - Open UR5e
-        marco/close_ur5e (std_srvs/Empty) - Close UR5e
-        marco/open_ur16e (std_srvs/Empty) - Open UR16e
-        marco/close_ur16e (std_srvs/Empty) - Close UR16e
-        marco/joint_pos (std_srvs/Empty) - Print both arm's joint position
-        marco/arm_pos (std_srvs/Empty) - Print both arm's end effector position
-
-
-"""
 import enum
 import sys
 
@@ -42,7 +25,7 @@ import copy
 
 
 class MockUp:
-    """Main Node to do assembly, assembly and moving the mobile base."""
+    """Node to test basic functions of UR robot"""
     def __init__(self): 
         self.get_params()
         self.tfBuffer = tf2_ros.Buffer()
@@ -57,8 +40,9 @@ class MockUp:
         
         self.joint_pos_srv = rospy.Service("marco/joint_pos", Empty , self.joint_pos)
         self.arm_pos_srv = rospy.Service("marco/arm_pos", Empty , self.arm_pos)
-        self.move_GOALA = rospy.ServiceProxy('marco/moveto_goalA', Empty)
-        self.move_GOALB = rospy.ServiceProxy('marco/moveto_goalB', Empty)
+        self.move_GOALA = rospy.ServiceProxy('marco/GoToFirstGoal', Empty)
+        self.move_GOALB = rospy.ServiceProxy('marco/GoToSecondGoal', Empty)
+        
         self.setup_grippers()
         self.tuck() 
         
@@ -77,11 +61,15 @@ class MockUp:
         self.move_GOALA()
         self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
 
+        # # # self.new_move(0)
+        # self.isotope_detach()
+        # self.flag = 0
+        # self.ctimer = 0
+        # self.gen_timer = 0
+
+        # self.new_flag = 0
     
     def main_loop(self,timer):
-        """
-        Find the April tags based on the state of the system.
-        """
         if self.tag2 and self.flag == 0 and self.gen_timer > 100:
             self.cooling_detach()
             self.flag =1 
@@ -90,6 +78,7 @@ class MockUp:
             self.flag = 2
         elif self.tag0 and self.flag ==2 and self.ctimer > 50:
             self.isotope_detach()
+            self.move_GOALB()
             self.flag = 3
             self.state = 2
         else:
@@ -101,12 +90,12 @@ class MockUp:
             self.second_timer += 1
 
         if self.tag5 and self.new_flag ==0 and self.second_timer > 150 and self.flag ==3:
-            self.replace(0)
+            self.new_move(0)
             self.new_flag = 1
             
         if self.state == 1:
             try:
-                self.tag0 = self.tfBuffer.lookup_transform("base_link","Tag0",rospy.Time(0)) 
+                self.tag0 = self.tfBuffer.lookup_transform("base_link","Tag3",rospy.Time(0)) 
                 self.tag2 = self.tfBuffer.lookup_transform("base_link","Tag2",rospy.Time(0))
                 self.tag4 = self.tfBuffer.lookup_transform("base_link","Tag4",rospy.Time(0))
                 self.tag5 = self.tfBuffer.lookup_transform("base_link","Tag5",rospy.Time(0))
@@ -118,14 +107,8 @@ class MockUp:
                 self.tag5 = self.tfBuffer.lookup_transform("base_link","Tag5",rospy.Time(0))
             except:
                 pass
-            
+    # def tool_exchanger(self): 
     def joint_pos(self,req):
-        """
-            Function:
-                Print the joint position of the robot
-            Args:
-                req - Empty
-        """
         print("UR5e")
         print(self.move_group.get_current_joint_values())
         print("UR16e")
@@ -133,12 +116,6 @@ class MockUp:
         return EmptyResponse()
 
     def arm_pos(self,req):
-        """
-            Function:
-                Print the Pose of the End effector of the robot
-            Args:
-                req - Empty
-        """
         print("UR5e")
         print(self.move_group.get_current_pose().pose)
         print("UR16e")
@@ -146,10 +123,7 @@ class MockUp:
         return EmptyResponse()
     
     def tuck(self):
-        """
-            Function:
-                Send the arms to a position close to the base when moving to avoid hitting the enviornment.
-        """
+
         self.move_group_16.go(self.UR16e_tuck, wait=True)
         self.move_group_16.stop()
 
@@ -157,20 +131,17 @@ class MockUp:
         self.move_group.stop()
 
     def cooling_detach(self):
-        """
-            Function:
-                Make the UR5e detach the water cooling pipe from the isotope.
-        """
         rospy.sleep(2.0)
         self.move_group.go(self.UR5e_ready_jp, wait=True)
         self.move_group.stop()
-
-        # Go to cooling pipe
+        
         scale = 1
         waypoints = []
 
         wpose = self.move_group.get_current_pose().pose
+        # wpose.position.x = self.tag2.transform.translation.x
         wpose.position.y = self.tag2.transform.translation.y
+        # wpose.position.z = self.tag2.transform.translation.z - .21
         wpose.position.z = self.tag2.transform.translation.z
         wpose.position.x = self.tag2.transform.translation.x + .15
 
@@ -185,7 +156,7 @@ class MockUp:
         self.move_group.execute(plan,wait=True)
 
         self.close_ur5e(0)
-        # Move away and detach
+
         waypoints = []
         wpose = self.move_group.get_current_pose().pose
         wpose.position.x += 0.10
@@ -204,7 +175,6 @@ class MockUp:
         self.move_group.go(self.UR5e_ready_jp, wait=True)
         self.move_group.stop()
 
-        # Put the water cooling aside
         waypoints = []
         wpose = self.move_group.get_current_pose().pose
         wpose.position.y = self.tag2.transform.translation.y
@@ -225,15 +195,14 @@ class MockUp:
         self.move_group.go(self.UR5e_ready_jp, wait=True)
         self.move_group.stop()
         
+
+    def cooling_place(self):
+        pass
     def isotope_grab(self):
-        """
-            Function:
-                The UR16e will move to the target and lift it up.
-        """
-        # Go to Ur16e home
+        ######## Go to Ur16e home#################
         self.move_group_16.go(self.UR16e_ready_jp, wait=True)
         self.move_group_16.stop()
-        # Go to object's y and z
+        ######### Go to object's y and z####################
         scale = 1
         waypoints = []
 
@@ -251,7 +220,7 @@ class MockUp:
         plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
         print(fraction)
         self.move_group_16.execute(plan,wait=True)
-        #Go to object's x
+        ######### Go to object's x####################
         scale = 1
         waypoints = []
 
@@ -268,9 +237,9 @@ class MockUp:
         print(fraction)
         self.move_group_16.execute(plan,wait=True)
 
-        #Grab Objetcts
+        ######### Grab Objetcs ####################
         self.close_ur16e(0)
-        # Move Up 
+        ######### Move Up ####################
         scale = 1
         waypoints = []
 
@@ -286,23 +255,22 @@ class MockUp:
         plan = self.move_group_16.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
         print(fraction)
         self.move_group_16.execute(plan,wait=True)
+        ######### Move Closer####################
 
     def isotope_detach(self):
-        """
-            Function:
-                The UR5e will move to the isotope and detach it from the target assembly.
-        """
-        #Move to Ur5e home 
+        #########Move to Ur5e home ###########
+        self.UR5e_ready_jp[-1] = -0.48
         self.move_group.go(self.UR5e_ready_jp, wait=True)
         self.move_group.stop()
 
-        #Move to object y and z 
+        ######### Move to object y and z ##############
         scale = 1
         waypoints = []
 
         wpose = self.move_group.get_current_pose().pose
         wpose.position.y = self.tag0.transform.translation.y + 0.015
         wpose.position.z = self.tag0.transform.translation.z - 0.025
+        # wpose.position.x -= .175
 
         waypoints.append(copy.deepcopy(wpose))
         (plan, fraction) = self.move_group.compute_cartesian_path(
@@ -313,7 +281,7 @@ class MockUp:
         plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
         print(fraction)
         self.move_group.execute(plan,wait=True)
-        #Move to object's x 
+        ######### Move to object's x  ##############
         scale = 1
         waypoints = []
 
@@ -329,9 +297,9 @@ class MockUp:
         plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
         print(fraction)
         self.move_group.execute(plan,wait=True)
-        # Grab Object 
+        ######## Grab Object ##################
         self.close_ur5e(0)
-        # Detach 
+        ############### Detach ################
         scale = 1
         waypoints = []
 
@@ -348,28 +316,25 @@ class MockUp:
         print(fraction)
         self.move_group.execute(plan,wait=True)
 
-        self.move_GOALB()
 
-
-    def replace(self,req):
-        """
-            Function:
-                Drop off the old isotope with the UR5e, tuck in the UR16e, and then assemble the target assembly.
-            args:
-                req - Empty
-        """
+    def new_move(self,req):
+        print("starting#################################")
         rospy.sleep(3.)
+        
         
         object_pos = [0,0,0,0,0,0,0]
         object_pos[0:3] = [self.tag5.transform.translation.x,self.tag5.transform.translation.y,self.tag5.transform.translation.z]
         object_pos[3:]= self.ur5e_tool_above_pose
+        
+        # self.move_group.go(self.ur5e_dual_home_js, wait=True)
+        # self.move_group.stop()
 
         self.move_group.go(self.ur5e_tool_above_js, wait=True)
         self.move_group.stop()
 
         self.move_group_16.go(self.UR16e_final_js, wait=True)
         self.move_group_16.stop()
-        # Drop off old part
+        ################################################# Drop off old part
 
         scale = 1
         waypoints = []
@@ -377,8 +342,15 @@ class MockUp:
         wpose = self.move_group.get_current_pose().pose
         wpose.position.x = object_pos[0] + 0.15  #The offset from the save'd joint positions above the TE
         wpose.position.y = object_pos[1] + 0.1
-        wpose.position.z = object_pos[2] + 0.17
+        wpose.position.z = object_pos[2] + 0.13
+        # wpose.position.y += scale * 0.2  # and sideways (y)
         waypoints.append(copy.deepcopy(wpose))
+
+        # We want the Cartesian path to be interpolated at a resolution of 1 cm
+        # which is why we will specify 0.01 as the eef_step in Cartesian
+        # translation.  We will disable the jump threshold by setting it to 0.0,
+        # ignoring the check for infeasible jumps in joint space, which is sufficient
+        # for this tutorial.
         (plan, fraction) = self.move_group.compute_cartesian_path(
                                         waypoints,   # waypoints to follow
                                         0.01,        # eef_step
@@ -394,7 +366,7 @@ class MockUp:
         self.move_group.go(self.ur5e_tool_above_js, wait=True)
         self.move_group.stop()
 
-        # Go to april tag's x and y 
+        ################################################# Go to april tag's x and y 
 
         scale = 1
         waypoints = []
@@ -402,7 +374,14 @@ class MockUp:
         wpose = self.move_group.get_current_pose().pose
         wpose.position.x = object_pos[0] - 0.02  #The offset from the save'd joint positions above the TE
         wpose.position.y = object_pos[1] + 0.01
+        # wpose.position.y += scale * 0.2  # and sideways (y)
         waypoints.append(copy.deepcopy(wpose))
+
+        # We want the Cartesian path to be interpolated at a resolution of 1 cm
+        # which is why we will specify 0.01 as the eef_step in Cartesian
+        # translation.  We will disable the jump threshold by setting it to 0.0,
+        # ignoring the check for infeasible jumps in joint space, which is sufficient
+        # for this tutorial.
         (plan, fraction) = self.move_group.compute_cartesian_path(
                                         waypoints,   # waypoints to follow
                                         0.01,        # eef_step
@@ -413,12 +392,19 @@ class MockUp:
         self.move_group.execute(plan,wait=True)
 
         
-        #To to tag's Z
+        ############################################################################# To to tag's Z
         
         waypoints = []
         wpose = self.move_group.get_current_pose().pose
         wpose.position.z = object_pos[2] + 0.13
+        # wpose.position.y += scale * 0.2  # and sideways (y)
         waypoints.append(copy.deepcopy(wpose))
+
+        # We want the Cartesian path to be interpolated at a resolution of 1 cm
+        # which is why we will specify 0.01 as the eef_step in Cartesian
+        # translation.  We will disable the jump threshold by setting it to 0.0,
+        # ignoring the check for infeasible jumps in joint space, which is sufficient
+        # for this tutorial.
         (plan, fraction) = self.move_group.compute_cartesian_path(
                                         waypoints,   # waypoints to follow
                                         0.01,        # eef_step
@@ -427,17 +413,24 @@ class MockUp:
         plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
         print(fraction)
         self.move_group.execute(plan,wait=True)
+        ############################################################################
 
         self.close_ur5e(0)
 
-        #GO up
+
         scale = 1
         waypoints = []
 
         wpose = self.move_group.get_current_pose().pose
         wpose.position.z = object_pos[2] + 0.27
+        # wpose.position.y += scale * 0.2  # and sideways (y)
         waypoints.append(copy.deepcopy(wpose))
 
+        # We want the Cartesian path to be interpolated at a resolution of 1 cm
+        # which is why we will specify 0.01 as the eef_step in Cartesian
+        # translation.  We will disable the jump threshold by setting it to 0.0,
+        # ignoring the check for infeasible jumps in joint space, which is sufficient
+        # for this tutorial.
         (plan, fraction) = self.move_group.compute_cartesian_path(
                                         waypoints,   # waypoints to follow
                                         0.01,        # eef_step
@@ -446,19 +439,28 @@ class MockUp:
         plan = self.move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
         print(fraction)
         self.move_group.execute(plan,wait=True)
+        #############################################################################
         
 
 
         self.move_group.go(self.ur5e_tool_goal_js, wait=True)
         self.move_group.stop()
 
-        #Push up to UR16e part
+
         scale = 1
         waypoints = []
 
         wpose = self.move_group.get_current_pose().pose
         wpose.position.x -= 0.07
+        wpose.position.z -= 0.01
+        # wpose.position.y += scale * 0.2  # and sideways (y)
         waypoints.append(copy.deepcopy(wpose))
+
+        # We want the Cartesian path to be interpolated at a resolution of 1 cm
+        # which is why we will specify 0.01 as the eef_step in Cartesian
+        # translation.  We will disable the jump threshold by setting it to 0.0,
+        # ignoring the check for infeasible jumps in joint space, which is sufficient
+        # for this tutorial.
         (plan, fraction) = self.move_group.compute_cartesian_path(
                                         waypoints,   # waypoints to follow
                                         0.01,        # eef_step
@@ -468,11 +470,42 @@ class MockUp:
         print(fraction)
         self.move_group.execute(plan,wait=True)
 
+
+
+
+
+    def manipulation_func(self, way_list,arm_move_group):
+        print("Starting waypoints")
+        for i in way_list:
+            if len(i) == 6:
+                arm_move_group.go(i, wait=True)
+                arm_move_group.stop()
+            elif len(i) == 7:
+                scale = 1
+                waypoints = []
+                wpose = arm_move_group.get_current_pose().pose
+                waypoints.append(copy.deepcopy(wpose))
+                (plan, fraction) = arm_move_group.compute_cartesian_path(
+                                                waypoints,   
+                                                0.01,        
+                                                0.0)         
+                plan = arm_move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+                print(fraction)
+                arm_move_group.execute(plan,wait=True)
+        print("Finished waypoints")
+
     def get_params(self):
-        """
-            Function:
-                Import all the paramters from the server.
-        """
+        self.ur5e_home_pose = rospy.get_param("/ur5e_home_pose")
+        self.ur16e_home_pose = rospy.get_param("/ur16e_home_pose")
+        self.ur5e_vert_ee_j = rospy.get_param("/ur5e_vert_ee_j")
+        self.ur5e_hori_ee_j = rospy.get_param("/ur5e_hori_ee_j")
+        self.ur5e_goal_pose = rospy.get_param("/ur5e_goal_pose")
+        self.ur5e_vert_ee_pose = rospy.get_param("/ur5e_vert_ee_pose")
+        self.ur5e_hori_ee_pose = rospy.get_param("/ur5e_hori_ee_pose")
+        self.goal_tool_js = rospy.get_param("/goal_tool_js")
+        self.goal_tool_pose = rospy.get_param("/goal_tool_pose")
+
+        self.ur5e_dual_home_js = rospy.get_param("/ur5e_dual_home_js")
         self.ur5e_tool_above_js = rospy.get_param("/ur5e_tool_above_js")
         self.ur5e_tool_above_pose = rospy.get_param("/ur5e_tool_above_pose")
         self.ur5e_tool_goal_js = rospy.get_param("/ur5e_tool_goal_js")
@@ -485,10 +518,6 @@ class MockUp:
         self.UR16e_final_js = rospy.get_param("/UR16e_final_js")
 
     def home_poses(self):
-        """
-            Function:
-                Send the robot to its home/ready pose.
-        """
         print("Going to home poses")
         
         self.move_group.go(self.UR5e_ready_jp, wait=True)
@@ -499,10 +528,6 @@ class MockUp:
 
 
     def setup_grippers(self):
-        """
-            Function:
-                Create the services to control the grippers for each arm. Also makes them open and close to ensure they're working.
-        """
         self.open_ur5e_srv = rospy.Service("marco/open_ur5e", Empty , self.open_ur5e) 
         self.close_ur5e_srv = rospy.Service("marco/close_ur5e", Empty , self.close_ur5e) 
         self.close_ur16e_srv = rospy.Service("marco/close_ur16e", Empty , self.close_ur16e) 
@@ -526,24 +551,14 @@ class MockUp:
         rospy.sleep(1.5)
     
     def close_ur5e(self,req):
-        """
-            Function:
-                Close the UR5e Robotiq gripper.
-            args:
-                req - Empty
-        """
+
         command = self.ur5e_gripper.close()
         self.ur5e_gripper_pub.publish(command)
         rospy.sleep(1.0)
         return EmptyResponse()
 
     def open_ur5e(self,req):
-        """
-            Function:
-                Open the UR5e Robotiq gripper.
-            args:
-                req - Empty
-        """
+
         command = self.ur5e_gripper.open()
         self.ur5e_gripper_pub.publish(command)
         rospy.sleep(1.0)
@@ -551,30 +566,34 @@ class MockUp:
         return EmptyResponse()
 
     def close_ur16e(self,req):
-        """
-            Function:
-                Close the UR16e Robotiq gripper.
-            args:
-                req - Empty
-        """
         command = self.ur16e_gripper.close()
         self.ur16e_gripper_pub.publish(command)
         rospy.sleep(1.0)
         return EmptyResponse()
 
     def open_ur16e(self,req):
-        """
-            Function:
-                Open the UR16e Robotiq gripper.
-            args:
-                req - Empty
-        """
         command = self.ur16e_gripper.open()
         self.ur16e_gripper_pub.publish(command)
         rospy.sleep(1.0)
 
         return EmptyResponse()
- 
+
+    def cartesian_func(self,offsets,arm_move_group):
+        scale = 1
+        waypoints = []
+        wpose.position.x += offsets[0]  #The offset from the save'd joint positions above the TE
+        wpose.position.y += offsets[1]
+        wpose.position.z += offsets[2]
+        wpose = arm_move_group.get_current_pose().pose
+        waypoints.append(copy.deepcopy(wpose))
+        (plan, fraction) = arm_move_group.compute_cartesian_path(
+                                        waypoints,   
+                                        0.01,        
+                                        0.0)         
+        plan = arm_move_group.retime_trajectory(self.robot.get_current_state(),plan,0.5,0.5)
+        print(fraction)
+        arm_move_group.execute(plan,wait=True)   
+
             
 def main(): #The main function.
     rospy.init_node("MockUpNode")

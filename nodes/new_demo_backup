@@ -1,0 +1,361 @@
+#!/usr/bin/env python
+import enum
+import sys
+# from tracemalloc import start
+# from winreg import EnumValue
+
+import rospy
+import actionlib
+from std_srvs.srv import Empty, EmptyResponse
+from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
+from trajectory_msgs.msg import JointTrajectoryPoint
+from controller_manager_msgs.srv import SwitchControllerRequest, SwitchController
+from controller_manager_msgs.srv import LoadControllerRequest, LoadController
+import geometry_msgs.msg as geometry_msgs
+from argonne_final_project.msg import SetPosition
+# from cartesian_control_msgs.msg import (
+#     FollowCartesianTrajectoryAction,
+#     FollowCartesianTrajectoryGoal,
+#     CartesianTrajectoryPoint,
+# )
+import time
+import signal
+from argonne_final_project.robotiq_Control_lib import RobotiqControl
+from robotiq_2f_gripper_control.msg import _Robotiq2FGripper_robot_output  as outputMsg 
+import moveit_commander
+import tf2_ros
+
+
+HOST = "192.168.12.248"
+PORT = 54321
+
+def handler(signal, frame):
+    global cont
+    cont = False
+
+#straight forward just position
+ee_pos = [1.0333, 0.021065, 0.859]
+
+#position with end effector pose
+ee_with_pose = [1.0333, 0.021065, 0.859,0.56546, 0.50463, 0.44492, 0.47713]
+
+## joint control
+pos_left = [2.14,-2.00,-1.63,3.50,-1.71,3.0]
+pos_right = [2.14,-3.39,-1.63,-1.70,-1.71,-2.64]
+
+looking_pose = [0.84709, 0.035954, 1.0775,-0.47384, 0.59388, -0.53804, 0.36509]
+setup_pose = [0.83294, 0.041071, 0.8052,0.54062, 0.48426, 0.46606, 0.50597]
+setup_above_pose = [0.83294, 0.041071, 0.8352,0.54062, 0.48426, 0.46606, 0.50597]
+setup_higher_pose = [0.64796, 0.10451, 1.2673,0.54062, 0.48426, 0.46606, 0.50597]
+lift_pose = [0.97633, 0.027336, 0.83743,0.5406, 0.48429, 0.46616, 0.50588]
+get_pose = [0.97633, 0.027336, 0.79743,0.5406, 0.48429, 0.46616, 0.50588]
+tool_orientation = [0,0,0,-0.50847, 0.56835, -0.50546, 0.40366]
+ur16e_pose = [-0.0074756, -0.036322, 1.5851,-0.37578, 0.63553, 0.57589, 0.35106]
+
+#new poses for demo
+ur5_home = [0.748, 0.10449, 1.0673,-0.47384, 0.59388, -0.53804, 0.36509]
+ur5_home_joints = [2.2736757437335413, -2.186763902703756, -1.5620740095721644, -3.8532282314696253, 4.408585071563721, -0.03483611742128545]
+ur16_home = [-0.25547, -0.056835, 1.3218,-0.37581, 0.63555, 0.57579, 0.35115]
+
+waypoint5_ = [0.71778, 0.33905, 1.2487,-0.71671, 0.10686, 0.012238, 0.68903]
+ur5_goal = [0.15664, 0.51908, 1.2297,-0.54132, -0.41544, 0.47984, 0.55148]
+
+waypoint_16 = [-0.69389, 0.13007, 1.1172,0.93339, 0.060175, -0.35335, -0.017613]
+ur16_goal = [-0.098368, 0.49524, 1.3953,0.59552, -0.57032, 0.34075, -0.45164]
+
+park_way_16_1 = [-0.39537, 0.23001, 1.0959,0.69908, -0.25703, 0.62918, -0.22215]
+park_way_16_2 = [-0.16198, 0.63335, 1.2647,0.61479, -0.46771, 0.62799, -0.094363]
+park_way_16_3 = [-0.1903, 0.64394, 1.3696,0.61481, -0.46771, 0.62809, -0.093627]
+
+demo_way_1 = [-0.36236, 0.58945, 1.4227,0.55579, -0.44754, 0.50539, -0.48517]
+demo_way_2 = [-0.075564, 0.5955, 1.4107,-0.47976, 0.69629, -0.4586, 0.2733]
+demo_way_3 = [-0.049535, 0.56748, 1.4764,-0.44985, 0.72586, -0.41791, 0.31002]
+
+park_way_16_3_COPY = [-0.035732, 0.56159, 1.3464,-0.63017, 0.65259, -0.41071, 0.091304]
+
+
+class Coop:
+    """Node to test basic functions of UR robot"""
+    def __init__(self): 
+        '''
+        Initialize variables and load parameters.
+        '''
+        moveit_commander.roscpp_initialize(sys.argv)
+        self.robot = moveit_commander.RobotCommander()
+        group_name = "ur5e"
+        self.move_group = moveit_commander.MoveGroupCommander(group_name)
+        group_name_16 = "ur16e"
+        self.move_group_16 = moveit_commander.MoveGroupCommander(group_name_16)
+
+        self.robot_demo = rospy.Service("marco/demo_move",Empty, self.demo_move)
+        self.ee_pos_srv = rospy.Service("marco/goto_pos", Empty , self.go_pos) 
+        self.ee_pose_srv = rospy.Service("marco/goto_pose", Empty , self.go_pose) 
+        self.open_hand_srv = rospy.Service("marco/open", Empty , self.open_hand) 
+        self.close_hand_srv = rospy.Service("marco/close", Empty , self.close_hand) 
+        self.reset_all_srv = rospy.Service("marco/reset_all", Empty , self.reset_all) 
+
+        self.ur5e_gripper_pub = rospy.Publisher('ur5e/Robotiq2FGripperRobotOutput', outputMsg.Robotiq2FGripper_robot_output,queue_size=10)
+        self.ur16e_pub = rospy.Publisher("/set_position",SetPosition,queue_size=10)
+        self.close_ur16e_srv = rospy.Service("marco/close_ur16e", Empty , self.close_ur16e) 
+        self.open_ur16e_srv = rospy.Service("marco/open_ur16e", Empty , self.open_ur16e) 
+
+        self.test_robotiq()
+
+
+        self.tfBuffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tfBuffer)
+
+        self.move_group.set_pose_target(ur5_home)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        # self.move_group_16.set_pose_target(park_way_16_1)
+        # self.move_group_16.go(wait=True)
+        # self.move_group_16.stop()
+        # self.move_group_16.clear_pose_targets()
+
+        self.move_group_16.set_pose_target(demo_way_1)
+        self.move_group_16.go(wait=True)
+        self.move_group_16.stop()
+        self.move_group_16.clear_pose_targets()
+
+        self.count = 0
+        self.timer = rospy.Timer(rospy.Duration(1.0/10.0), self.main_loop)
+
+    
+    def test_robotiq(self):
+        print 'test_robotiq start'
+        self.hand = RobotiqHand()
+        self.hand.connect(HOST, PORT)
+        self.hand.reset()
+        self.hand.activate()
+    
+    def close_hand(self,req):
+        self.hand.move(255, 100, 1)
+        (status, position, force) = self.hand.wait_move_complete()
+
+        return EmptyResponse()
+
+    def open_hand(self,req):
+        self.hand.move(0, 100, 1)
+        (status, position, force) = self.hand.wait_move_complete()
+
+        return EmptyResponse()
+
+    def close_ur16e(self,req):
+        close_pos = SetPosition()
+        close_pos.id = 1
+        close_pos.position = 700
+        print("got here")
+        self.ur16e_pub.publish(close_pos)
+        print("finished!")
+
+        return EmptyResponse()
+
+    def open_ur16e(self,req):
+        open_pos = SetPosition()
+        open_pos.id = 1
+        open_pos.position = 0
+        print("got here")
+        self.ur16e_pub.publish(open_pos)
+        print("finished!")
+
+        return EmptyResponse()
+
+    def create_waypoints(self,start_pos,end_pos):
+        waypoint_list = []
+        increments = []
+        num_way = 5
+        print('ehllo')
+        for i in range(len(start_pos)):
+            delta = end_pos[i] - start_pos[i]
+            delta = delta/num_way
+            increments.append(delta)
+
+        for i in start_pos:
+            new_way = []
+            for j in range(len(start_pos)):
+                new_way.append(i+increments[j])
+            self.move_group.set_pose_target(new_way)
+            self.move_group.go(wait=True)
+            self.move_group.stop()
+            self.move_group.clear_pose_targets()
+
+        
+    def reset_all(self,req):
+        
+        self.hand.move(0, 100, 1)
+        (status, position, force) = self.hand.wait_move_complete()
+
+        self.move_group.set_pose_target(ur5_home)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        self.move_group_16.set_pose_target(demo_way_1)
+        self.move_group_16.go(wait=True)
+        self.move_group_16.stop()
+        self.move_group_16.clear_pose_targets()
+
+    def main_loop(self,timer):
+        # temp_pos = self.move_group.get_current_pose("manipulator")
+        # print("got here")
+        try:
+            self.trans = self.tfBuffer.lookup_transform("base_link","Tag69",rospy.Time())
+            if self.count == 50:
+                
+                # print("The new transform is", self.trans)
+                # print("The new transform is", self.trans.transform.translation.x)
+                self.count = 0
+            self.count = self.count + 1
+
+        except:
+            pass
+        # print(f"The new transform is {trans}")
+
+    def demo_move(self,req):
+        
+        new_get = tool_orientation
+        new_get[0] = self.trans.transform.translation.x - 0.1
+        new_get[1] = self.trans.transform.translation.y + 0.06
+        new_get[2] = self.trans.transform.translation.z - 0.1
+
+        self.move_group.set_pose_target(ur5_home)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+        print("just before picking it up")
+        self.move_group.set_pose_target(new_get)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        new_get = tool_orientation
+        new_get[0] = self.trans.transform.translation.x +  0.05
+        new_get[1] = self.trans.transform.translation.y + 0.06
+        new_get[2] = self.trans.transform.translation.z - 0.1
+        print("picking up")
+        self.move_group.set_pose_target(new_get)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        self.hand.move(255, 100, 1)
+        (status, position, force) = self.hand.wait_move_complete()
+
+        new_get[2] = new_get[2] + 0.1
+        self.move_group.set_pose_target(new_get)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        self.move_group.set_pose_target(ur5_home)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+
+        self.move_group.set_pose_target(waypoint5_)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+        # self.create_waypoints(ur5_home,waypoint5_)
+
+        self.move_group.set_pose_target(ur5_goal)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+        
+
+        # self.move_group_16.set_pose_target(waypoint_16)
+        # self.move_group_16.go(wait=True)
+        # self.move_group_16.stop()
+        # self.move_group_16.clear_pose_targets()
+
+        # self.move_group_16.set_pose_target(park_way_16_2)
+        # self.move_group_16.go(wait=True)
+        # self.move_group_16.stop()
+        # self.move_group_16.clear_pose_targets()
+
+
+        # self.move_group_16.set_pose_target(park_way_16_3)
+        # self.move_group_16.go(wait=True)
+        # self.move_group_16.stop()
+        # self.move_group_16.clear_pose_targets()
+
+        self.move_group_16.set_pose_target(demo_way_2)
+        self.move_group_16.go(wait=True)
+        self.move_group_16.stop()
+        self.move_group_16.clear_pose_targets()
+
+        close_pos = SetPosition()
+        close_pos.id = 1
+        close_pos.position = 700
+        self.ur16e_pub.publish(close_pos)
+        rospy.sleep(3)
+
+        self.move_group_16.set_pose_target(demo_way_3)
+        self.move_group_16.go(wait=True)
+        self.move_group_16.stop()
+        self.move_group_16.clear_pose_targets()
+
+
+
+        # self.move_group.set_pose_target([0.70445, 0.049504, 1.1009,0.54083, 0.48453, 0.46611, 0.50544])
+        # self.move_group.go(wait=True)
+        # self.move_group.stop()
+        # self.move_group.clear_pose_targets()
+
+        # self.hand.move(0, 100, 1)
+        # (status, position, force) = self.hand.wait_move_complete()
+
+        return EmptyResponse()
+
+
+    def go_pos(self,req):
+        self.move_group.set_position_target(ee_pos)
+        # move_group.set_pose_target(pose_in_space)
+        ##use set_target_position
+        # (success_flag, trajectory_message,planning_time, error_code) = self.move_group.plan()
+        # if success_flag == False:
+        #     return error_code
+        # self.move_group.execute(trajectory_message,wait=True)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+ 
+        ###########################################
+
+        return EmptyResponse()
+
+    def go_pose(self,req):
+        self.move_group.set_pose_target(ee_with_pose)
+        # move_group.set_pose_target(pose_in_space)
+        ##use set_target_position
+        # (success_flag, trajectory_message,planning_time, error_code) = self.move_group.plan()
+        # if success_flag == False:
+        #     return error_code
+        # self.move_group.execute(trajectory_message,wait=True)
+        self.move_group.go(wait=True)
+        self.move_group.stop()
+        self.move_group.clear_pose_targets()
+ 
+        ###########################################
+
+        return EmptyResponse()
+
+def main(): #The main function.
+    rospy.init_node("new_demo_node")
+    try:
+        move_arm = Coop()
+        rospy.spin()
+
+    except rospy.ROSInterruptException:
+        return
+    except KeyboardInterrupt:
+        return
+
+
+if __name__ == "__main__":
+    # signal.signal(signal.SIGINT, handler)
+    main()
