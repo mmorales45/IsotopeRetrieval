@@ -177,3 +177,4 @@ For this issue, one of the known errors if you programmed the robot to run witho
 ## ROS Drivers Fail
 
 There are a number of reasons this could occur. Some of the common issues are the IP addresses for the arms do not align with those chosen. Try disabling any wifi connection on the laptop and instead make sure the only active connection is the ethernet connection to both robotic arms. 
+
