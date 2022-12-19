@@ -10,7 +10,7 @@ repositories:
   argonne_final_project:
     type: git
     url: https://github.com/mmorales45/IsotopeRetrieval.git
-    version: main
+    version: working
   dual_arm_moveit_config:
     type: git
     url: https://github.com/mmorales45/dual_arm_moveit_config.git
