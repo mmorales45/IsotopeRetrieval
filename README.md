@@ -56,6 +56,16 @@ cd ..
 rosdep install --from-paths src --ignore-src -r -y
 catkin_make
 ```
+
+Last step is to make the nodes executable!
+
+From the src folder of your directory do the following.
+
+```
+chmod +x /argonne_final_project/nodes/manipulation
+
+chmod +x /argonne_final_project/nodes/mir_test
+```
 # Arm Control
 
 ## Single Arm Control
